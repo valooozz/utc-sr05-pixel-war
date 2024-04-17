@@ -2,8 +2,57 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strconv"
+	"sync"
+	"time"
 )
 
+// Le programme envoie périodiquement des messages sur stdout
+func sendperiodic() {
+	var sndmsg string
+	var i int
+
+	i = 0
+
+	for {
+		mutex.Lock()
+		i = i + 1
+		sndmsg = "message_" + strconv.Itoa(i) + "\n"
+		fmt.Print(sndmsg)
+		mutex.Unlock()
+		time.Sleep(time.Duration(2) * time.Second)
+	}
+}
+
+// Quand le programme n'est pas en train d'écrire, il lit
+func receive() {
+	var rcvmsg string
+	l := log.New(os.Stderr, "", 0)
+
+	for {
+		fmt.Scanln(&rcvmsg)
+		mutex.Lock()
+		l.Println("reception <", rcvmsg, ">")
+		for i := 1; i < 6; i++ {
+			l.Println("traitement message", i)
+			time.Sleep(time.Duration(1) * time.Second)
+		}
+		mutex.Unlock()
+		rcvmsg = ""
+	}
+}
+
+var mutex = &sync.Mutex{}
+
 func main() {
-	fmt.Println("Hello world !")
+
+	//Création de 2 go routines qui s'exécutent en parallèle
+	go sendperiodic()
+	go receive()
+	//On décide de bloquer le programme principal
+	for {
+		time.Sleep(time.Duration(60) * time.Second)
+	} // Pour attendre la fin des goroutines...
 }
