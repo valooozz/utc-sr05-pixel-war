@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -10,26 +12,17 @@ import (
 
 // Le programme envoie périodiquement des messages sur stdout
 func sendperiodic() {
-	var sndmsg string
-	var i int
-
-	i = 0
-
-	for {
+	for i := 0; i < 4; i++ {
 		mutex.Lock()
-		i = i + 1
-		sndmsg = "message_" + strconv.Itoa(i) + "\n"
-		fmt.Print(sndmsg)
+		envoyerPixel(i, i, 255, 0, 0)
 		mutex.Unlock()
 		time.Sleep(time.Duration(2) * time.Second)
 	}
 }
 
 func envoyerPixel(positionX int, positionY int, rouge int, vert int, bleu int) {
-	mutex.Lock()
 	messagePixel := utils.MessagePixel{positionX, positionY, rouge, vert, bleu}
-	fmt.Printf(utils.MessagePixelToString(messagePixel))
-	mutex.Unlock()
+	fmt.Println(utils.MessagePixelToString(messagePixel))
 }
 
 // Quand le programme n'est pas en train d'écrire, il lit
@@ -38,24 +31,30 @@ func lecture() {
 
 	for {
 		fmt.Scanln(&rcvmsg)
-		mutex.Lock()
-		utils.DisplayInfo("app-de-base", "lecture", "Réception de : "+rcvmsg)
+
 		if rcvmsg[0] == uint8('A') { // On traite le message s'il commence par un 'A'
+			utils.DisplayError("app-de-base", "lecture", "Réception de : "+rcvmsg[1:])
+			mutex.Lock()
 			messagePixel := utils.StringToMessagePixel(rcvmsg[1:])
 			changerPixel(messagePixel)
+			mutex.Unlock()
 		}
-		mutex.Unlock()
 		rcvmsg = ""
 	}
 }
 
 func changerPixel(messagePixel utils.MessagePixel) {
-
+	utils.DisplayError(monNom, "changerPixel", "Et là bim on change le pixel")
 }
 
 var mutex = &sync.Mutex{}
+var pNom = flag.String("n", "base", "nom")
+var monNom string
 
 func main() {
+
+	flag.Parse()
+	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
 	//Création de 2 go routines qui s'exécutent en parallèle
 	go sendperiodic()
