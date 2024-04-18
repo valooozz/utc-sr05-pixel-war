@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"strconv"
 	"sync"
 	"time"
+	"utils"
 )
 
 // Le programme envoie périodiquement des messages sur stdout
@@ -26,22 +25,32 @@ func sendperiodic() {
 	}
 }
 
+func envoyerPixel(positionX int, positionY int, rouge int, vert int, bleu int) {
+	mutex.Lock()
+	messagePixel := utils.MessagePixel{positionX, positionY, rouge, vert, bleu}
+	fmt.Printf(utils.MessagePixelToString(messagePixel))
+	mutex.Unlock()
+}
+
 // Quand le programme n'est pas en train d'écrire, il lit
-func receive() {
+func lecture() {
 	var rcvmsg string
-	l := log.New(os.Stderr, "", 0)
 
 	for {
 		fmt.Scanln(&rcvmsg)
 		mutex.Lock()
-		l.Println("reception <", rcvmsg, ">")
-		for i := 1; i < 6; i++ {
-			l.Println("traitement message", i)
-			time.Sleep(time.Duration(1) * time.Second)
+		utils.DisplayInfo("app-de-base", "lecture", "Réception de : "+rcvmsg)
+		if rcvmsg[0] == uint8('A') { // On traite le message s'il commence par un 'A'
+			messagePixel := utils.StringToMessagePixel(rcvmsg[1:])
+			changerPixel(messagePixel)
 		}
 		mutex.Unlock()
 		rcvmsg = ""
 	}
+}
+
+func changerPixel(messagePixel utils.MessagePixel) {
+
 }
 
 var mutex = &sync.Mutex{}
@@ -50,7 +59,7 @@ func main() {
 
 	//Création de 2 go routines qui s'exécutent en parallèle
 	go sendperiodic()
-	go receive()
+	go lecture()
 	//On décide de bloquer le programme principal
 	for {
 		time.Sleep(time.Duration(60) * time.Second)
