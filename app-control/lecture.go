@@ -52,13 +52,13 @@ func lecture() {
 							} else {
 								messagePrepost := message
 								messagePrepost.Prepost = true
-								go envoyerMessage(utils.MessageToString(messagePrepost))
+								go envoyerMessageControle(messagePrepost)
 							}
 						}
 
 						message.Couleur = maCouleur
-						go envoyerMessage(utils.MessageToString(message))                 // Pour la prochaine app de contrôle de l'anneau
-						go envoyerMessage("A" + utils.MessagePixelToString(messagePixel)) // Pour l'app de base (on ajoute un 'A' au début)
+						go envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
+						go envoyerMessageBase(messagePixel) // Pour l'app de base
 					}
 				}
 				//TRAITEMENT DES MESSAGES D'ÉTAT
@@ -75,7 +75,7 @@ func lecture() {
 				H++
 				//ATTENTION ICI, METTRE À JOUR L'ÉTAT GLOBAL
 				message := utils.Message{messagePixel, H, monNom, maCouleur, false}
-				go envoyerMessage(utils.MessageToString(message))
+				go envoyerMessageControle(message)
 			}
 		}
 		mutex.Unlock()
