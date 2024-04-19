@@ -101,13 +101,12 @@ func main() {
 				if err != nil {
 					continue
 				}
-				if x == 0 && y == 0 && cr == 0 && cg == 0 && cb == 0 {
-					game.UpdateMatrix(x, y, uint8(cr), uint8(cg), uint8(cb))
-					fmt.Printf("Position du pixel (%d, %d) couleur (%d, %d, %d)\n", x, y, cr, cg, cb)
-				}
+				game.UpdateMatrix(x, y, uint8(cr), uint8(cg), uint8(cb))
+				fmt.Printf("Updated pixel at (%d, %d) to (%d, %d, %d)\n", x, y, cr, cg, cb)
 			}
 		}
 	}()
 
 	ebiten.RunGame(game)
+
 }
