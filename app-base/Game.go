@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"image/color"
 	"os"
 	"strconv"
@@ -16,8 +17,8 @@ type Pixel struct {
 }
 
 func createImageFromMatrix(matrix [][]Pixel) *ebiten.Image {
-	width := len(matrix[0])
-	height := len(matrix)
+	width := 50
+	height := 50
 	img := ebiten.NewImage(width, height)
 
 	for y := 0; y < height; y++ {
@@ -31,7 +32,9 @@ func createImageFromMatrix(matrix [][]Pixel) *ebiten.Image {
 }
 
 type Game struct {
-	matrix [][]Pixel
+	matrix        [][]Pixel
+	colorWheel    *ebiten.Image
+	selectedColor color.RGBA
 }
 
 func (g *Game) UpdateMatrix(x int, y int, CR uint8, CG uint8, CB uint8) {
@@ -43,12 +46,38 @@ func (g *Game) UpdateMatrix(x int, y int, CR uint8, CG uint8, CB uint8) {
 }
 
 func (g *Game) Update() error {
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
+		x, y := ebiten.CursorPosition()
+		g.UpdateMatrix(y, x, g.selectedColor.R, g.selectedColor.G, g.selectedColor.B)
+		// Oui je sais c'est bizarre mais les coordonnées de la souris ne sont pas comme est ordonnée la matrice
+	}
+	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonRight) {
+		x, y := ebiten.CursorPosition()
+		x_pourc := x * 100 / 50
+		y_pourc := y * 100 / 50
+
+		R, G, B, _ := g.colorWheel.At(x_pourc-100, y_pourc).RGBA()
+		g.selectedColor = color.RGBA{uint8(R), uint8(G), uint8(B), 0xFF}
+
+	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
+	// Draw the main image
+	screen.Fill(color.White)
+	op := &ebiten.DrawImageOptions{}
+	// Adjust position based on desired layout (explained later)
+	op.GeoM.Translate(0, 0)
+
 	img := createImageFromMatrix(g.matrix)
-	screen.DrawImage(img, nil)
+	screen.DrawImage(img, op)
+
+	// Draw the color wheel
+	colorWheelOp := &ebiten.DrawImageOptions{}
+	colorWheelOp.GeoM.Translate(100, 0)
+	colorWheelOp.GeoM.Scale(0.5, 0.5)
+	screen.DrawImage(g.colorWheel, colorWheelOp)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -67,9 +96,15 @@ func main() {
 			}
 		}
 	}
+	colorWheel, _, err := ebitenutil.NewImageFromFile("color_wheel.png")
+	if err != nil {
+		panic(err)
+	}
 
 	game := &Game{
-		matrix: matrix,
+		matrix:        matrix,
+		colorWheel:    colorWheel,
+		selectedColor: color.RGBA{R: 0, G: 0, B: 0, A: 0xFF},
 	}
 
 	ebiten.SetWindowSize(800, 600)

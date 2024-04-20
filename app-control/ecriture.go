@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"utils"
 )
 
 // Envoi une chaine de caractères sur la sortie standard
