@@ -19,7 +19,7 @@ func lecture() {
 				if utils.TrouverValeur(rcvmsg, "prepost") == "true" {
 					traiterMessagePrepost(rcvmsg)
 				} else {
-					utils.DisplayWarning(monNom, "main", "Message de contrôle reçu : "+rcvmsg)
+					//L'affichage sur stderr se fait dans le traitement pour ce type de message
 					traiterMessageControle(rcvmsg)
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
@@ -33,12 +33,13 @@ func lecture() {
 	}
 }
 
-//TRAITEMENT DES CONTRÔLES NORMAUX : on extrait le pixel que l'on exploite dans l'app-base et on fait suivre l'information
+// TRAITEMENT DES CONTRÔLES NORMAUX : on extrait le pixel que l'on exploite dans l'app-base et on fait suivre l'information
 // et tout cela avec les bonnes informations mises à jour dans le message : horloge, couleur
 func traiterMessageControle(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 
 	if message.Nom != monNom { // On traite le message uniquement s'il ne vient pas de nous
+		utils.DisplayWarning(monNom, "main", "Message de contrôle reçu : "+rcvmsg)
 		//Extraction de la partie pixel
 		messagePixel := message.Pixel
 		//Recalage de l'horloge locale et mise à jour de sa valeur dans le message également

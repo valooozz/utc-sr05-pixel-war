@@ -84,7 +84,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return len(g.matrix[0]), len(g.matrix)
 }
 
-func main() {
+func main1() {
 	matrix := make([][]Pixel, 100)
 	for y := 0; y < 100; y++ {
 		matrix[y] = make([]Pixel, 100)
