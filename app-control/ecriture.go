@@ -21,3 +21,7 @@ func envoyerMessageControle(message utils.Message) {
 func envoyerMessageBase(messagePixel utils.MessagePixel) {
 	envoyerMessage("A" + utils.MessagePixelToString(messagePixel))
 }
+
+func envoyerMessageEtat(message utils.MessageEtat) {
+
+}

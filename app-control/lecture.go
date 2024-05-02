@@ -36,6 +36,7 @@ func lecture() {
 // TRAITEMENT DES CONTRÔLES NORMAUX : on extrait le pixel que l'on exploite dans l'app-base et on fait suivre l'information
 // et tout cela avec les bonnes informations mises à jour dans le message : horloge, couleur
 func traiterMessageControle(rcvmsg string) {
+	monBilan--
 	message := utils.StringToMessage(rcvmsg)
 
 	if message.Nom != monNom { // On traite le message uniquement s'il ne vient pas de nous
@@ -46,17 +47,18 @@ func traiterMessageControle(rcvmsg string) {
 		H = utils.Recaler(H, message.Horloge)
 		message.Horloge = H
 
-		//ATTENTION ICI, METTRE À JOUR L'ÉTAT GLOBAL AVANT D'ENVOYER QUOI QUE CE SOIT
-
 		//Avertissement d'une coupure demandée et actions en conséquence
 		if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
 			maCouleur = utils.Jaune
+
+			//ATTENTION ICI, METTRE À JOUR L'ÉTAT GLOBAL AVANT D'ENVOYER QUOI QUE CE SOIT
+
 			messageEtat := utils.MessageEtat{list.List(monEtatLocal), monBilan}
 			go envoyerMessage(utils.MessageEtatToString(messageEtat))
 			//Réception d'un message prépost pas encore marqué comme prépost
 		} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
 			if jeSuisInitiateur {
-				// Ajouter le message reçu à la sauvegarde générale
+				// AJOUTER LE MESSAGE REÇU À LA SAUVEGARDE GÉNÉRALE
 			} else {
 				messagePrepost := message
 				messagePrepost.Prepost = true
@@ -72,8 +74,13 @@ func traiterMessageControle(rcvmsg string) {
 
 func traiterMessagePrepost(rcvmsg string) {
 	if jeSuisInitiateur {
+		nbMessagesAttendus--
+		// TRAITER L'AJOUT DU MESSAGE À L'ÉTAT DE SAUVEGARDE
 		//message := utils.StringToMessage(rcvmsg)
-		// Traiter l'ajout du message à l'état de sauvegarde
+
+		if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+			// FIN DE L'ALGORITHME DE SAUVEGARDE
+		}
 	} else {
 		go envoyerMessage(rcvmsg) // On fait suivre le message sur l'anneau
 	}
@@ -81,16 +88,36 @@ func traiterMessagePrepost(rcvmsg string) {
 
 func traiterMessageEtat(rcvmsg string) {
 	if jeSuisInitiateur {
-		// Traiter l'ajout de l'état à la sauvegarde générale
+		messageEtat := utils.StringToMessageEtat(rcvmsg)
+
+		// TRAITER L'AJOUT DE L'ÉTAT À LA SAUVEGARDE GÉNÉRALE
+
+		nbEtatsAttendus--
+		nbMessagesAttendus = nbMessagesAttendus - messageEtat.Bilan
+
+		if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+			// FIN DE L'ALGORITHME DE SAUVEGARDE
+		}
 	} else {
 		go envoyerMessage(rcvmsg)
 	}
 }
 
 func traiterMessagePixel(rcvmsg string) {
+	monBilan++
 	messagePixel := utils.StringToMessagePixel(rcvmsg)
 	H++
+
 	//ATTENTION ICI, METTRE À JOUR L'ÉTAT GLOBAL
+
 	message := utils.Message{messagePixel, H, monNom, maCouleur, false}
 	go envoyerMessageControle(message)
+}
+
+func traiterDebutSauvegarde() {
+	maCouleur = utils.Jaune
+	jeSuisInitiateur = true
+	// FAIRE UNE SAUVEGARDE DE L'ETAT LOCAL
+	nbEtatsAttendus = N - 1
+	nbMessagesAttendus = monBilan
 }

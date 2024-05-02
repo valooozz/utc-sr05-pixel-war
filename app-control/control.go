@@ -15,7 +15,11 @@ var H = 0
 var maCouleur = utils.Blanc
 var jeSuisInitiateur = false
 var monEtatLocal utils.EtatGlobal
-var monBilan int
+var monBilan = 0
+var nbEtatsAttendus = 0
+var nbMessagesAttendus = 0
+
+var N = 3
 
 var pNom = flag.String("n", "controle", "nom")
 var monNom string
