@@ -14,7 +14,8 @@ var mutex = &sync.Mutex{}
 var H = 0
 var maCouleur = utils.Blanc
 var jeSuisInitiateur = false
-var monEtatLocal utils.EtatGlobal
+var monEtatLocal utils.EtatLocal
+var etatGlobal utils.EtatGlobal
 var monBilan = 0
 var nbEtatsAttendus = 0
 var nbMessagesAttendus = 0
@@ -27,6 +28,8 @@ var monNom string
 func main() {
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
+
+	monEtatLocal.NomSite = monNom
 
 	go lecture()
 	for {
