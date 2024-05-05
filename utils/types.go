@@ -41,3 +41,5 @@ type MessageEtat struct {
 	EtatLocal EtatLocal
 	Bilan     int
 }
+
+type HorlogeVectorielle map[string]int

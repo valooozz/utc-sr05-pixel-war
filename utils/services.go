@@ -44,6 +44,21 @@ func MessageEtatToString(etat MessageEtat) string {
 	return sep1 + sep2 + "etat" + sep2 + EtatLocalToString(etat.EtatLocal) + sep1 + sep2 + "bilan" + sep2 + strconv.Itoa(etat.Bilan)
 }
 
+func HorlogeVectorielleToString(horloge HorlogeVectorielle) string {
+	sep1 := "_"
+	sep2 := ":"
+	str := ""
+
+	for site := range horloge {
+		str += sep1
+		str += site
+		str += sep2
+		str += strconv.Itoa(horloge[site])
+	}
+
+	return str
+}
+
 func TrouverValeur(message string, cle string) string {
 	if len(message) < 4 {
 		return ""
@@ -106,6 +121,20 @@ func StringToEtatLocal(str string) EtatLocal {
 	}
 
 	return EtatLocal{TrouverValeur(str, "nom"), liste}
+}
+
+func StringToHorlogeVectorielle(str string) HorlogeVectorielle {
+	horloge := HorlogeVectorielle{}
+	listeSites := strings.Split(str, "_")
+
+	for _, strSite := range listeSites {
+		if strSite != "" {
+			hSite := strings.Split(strSite, ":")
+			horloge[hSite[0]], _ = strconv.Atoi(hSite[1])
+		}
+	}
+
+	return horloge
 }
 
 func Recaler(x, y int) int {
