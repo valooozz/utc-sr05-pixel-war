@@ -137,6 +137,30 @@ func StringToHorlogeVectorielle(str string) HorlogeVectorielle {
 	return horloge
 }
 
+func MajHorlogeVectorielle(monNom string, locale, recue HorlogeVectorielle) HorlogeVectorielle {
+
+	// On met à jour les champs présents dans l'horloge locale
+	for site, valeurLocale := range locale {
+		valeurRecue, ok := recue[site]
+		if ok {
+			if valeurRecue > valeurLocale {
+				locale[site] = valeurRecue
+			}
+			delete(recue, site)
+		}
+	}
+
+	// On ajoute les champs restants dans l'horloge reçue
+	for site, valeurRecue := range recue {
+		locale[site] = valeurRecue
+	}
+
+	// On incrémente l'horloge du site local
+	locale[monNom]++
+
+	return locale
+}
+
 func Recaler(x, y int) int {
 	if x < y {
 		return y + 1
