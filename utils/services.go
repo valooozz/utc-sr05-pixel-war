@@ -1,8 +1,6 @@
 package utils
 
 import (
-	"container/list"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -28,21 +26,22 @@ func MessageToString(message Message) string {
 
 }
 
+func EtatLocalToString(etatLocal EtatLocal) string {
+	sep1 := "#"
+	sep2 := ";"
+	l := ""
+	for _, messagePixel := range etatLocal.ListMessagePixel {
+		l += "_"
+		l += MessagePixelToString(messagePixel)
+	}
+
+	return sep1 + sep2 + "nom" + sep2 + etatLocal.NomSite + sep1 + sep2 + "liste" + sep2 + l
+}
+
 func MessageEtatToString(etat MessageEtat) string {
 	sep1 := "~"
 	sep2 := ","
-	l := ""
-	for e := etat.EG.Front(); e != nil; e = e.Next() {
-		l += "_"
-		pixel, ok := e.Value.(MessagePixel)
-		if !ok {
-			fmt.Println("Conversion to MessagePixel failed")
-			return ""
-		}
-		l += MessagePixelToString(pixel)
-	}
-
-	return sep1 + sep2 + "etat" + sep2 + l + sep1 + sep2 + "bilan" + sep2 + strconv.Itoa(etat.Bilan)
+	return sep1 + sep2 + "etat" + sep2 + EtatLocalToString(etat.EtatLocal) + sep1 + sep2 + "bilan" + sep2 + strconv.Itoa(etat.Bilan)
 }
 
 func TrouverValeur(message string, cle string) string {
@@ -89,19 +88,24 @@ func StringToMessage(str string) Message {
 }
 
 func StringToMessageEtat(str string) MessageEtat {
-	var l list.List
-	tabtousmesspix := TrouverValeur(str, "etat")
-	fmt.Println(tabtousmesspix)
-	tabtousmesspixsplit := strings.Split(tabtousmesspix, "_")
-	for _, messpixel := range tabtousmesspixsplit {
-		if messpixel != "" {
-			fmt.Println(messpixel)
-			l.PushBack(StringToMessagePixel(messpixel))
+	etatLocal := StringToEtatLocal(TrouverValeur(str, "etat"))
+	bilan, _ := strconv.Atoi(TrouverValeur(str, "bilan"))
+
+	return MessageEtat{etatLocal, bilan}
+}
+
+func StringToEtatLocal(str string) EtatLocal {
+	var liste []MessagePixel
+	listeMessagePixel := TrouverValeur(str, "liste")
+	tabListeMessagePixel := strings.Split(listeMessagePixel, "_")
+
+	for _, strMessagePixel := range tabListeMessagePixel {
+		if strMessagePixel != "" {
+			liste = append(liste, StringToMessagePixel(strMessagePixel))
 		}
 	}
-	b, _ := strconv.Atoi(TrouverValeur(str, "bilan"))
-	messageetat := MessageEtat{l, b}
-	return messageetat
+
+	return EtatLocal{TrouverValeur(str, "nom"), liste}
 }
 
 func Recaler(x, y int) int {
