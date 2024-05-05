@@ -20,15 +20,17 @@ type MessagePixel struct {
 }
 
 type Message struct {
-	Pixel   MessagePixel
-	Horloge int
-	Nom     string
-	Couleur Couleur
-	Prepost bool // false pour les messages normaux
+	Pixel       MessagePixel
+	Horloge     int
+	Vectorielle HorlogeVectorielle
+	Nom         string
+	Couleur     Couleur
+	Prepost     bool // false pour les messages normaux
 }
 
 type EtatLocal struct {
 	NomSite          string
+	Vectorielle      HorlogeVectorielle
 	ListMessagePixel []MessagePixel
 }
 

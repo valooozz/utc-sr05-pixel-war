@@ -12,6 +12,7 @@ import (
 // Définition des variables
 var mutex = &sync.Mutex{}
 var H = 0
+var horlogeVectorielle = utils.HorlogeVectorielle{}
 var maCouleur = utils.Blanc
 var jeSuisInitiateur = false
 var monEtatLocal utils.EtatLocal
@@ -30,6 +31,7 @@ func main() {
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
 	monEtatLocal.NomSite = monNom
+	horlogeVectorielle[monNom] = 0
 
 	go lecture()
 	for {

@@ -14,8 +14,12 @@ func lecture() {
 		// On traite uniquement les messages qui ne commencent pas par un 'A'
 		if rcvmsg[0] != uint8('A') {
 
-			// Traitement des messages de contrôle
-			if utils.TrouverValeur(rcvmsg, "horloge") != "" {
+			// Demande de sauvegarde
+			if rcvmsg == "sauvegarde" {
+				traiterDebutSauvegarde()
+
+				// Traitement des messages de contrôle
+			} else if utils.TrouverValeur(rcvmsg, "horloge") != "" {
 				if utils.TrouverValeur(rcvmsg, "prepost") == "true" {
 					traiterMessagePrepost(rcvmsg)
 				} else {
@@ -48,6 +52,10 @@ func traiterMessageControle(rcvmsg string) {
 		// Recalage de l'horloge locale et mise à jour de sa valeur dans le message également
 		H = utils.Recaler(H, message.Horloge)
 		message.Horloge = H
+
+		// Mise à jour de l'horloge vectorielle locale et mise à jour de sa valeur dans le message également
+		horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, message.Vectorielle)
+		message.Vectorielle = horlogeVectorielle
 
 		// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
 		if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
@@ -117,15 +125,17 @@ func traiterMessagePixel(rcvmsg string) {
 	monBilan++
 	messagePixel := utils.StringToMessagePixel(rcvmsg)
 	H++
+	horlogeVectorielle[monNom]++
 
 	// Mise à jour de l'état local
 	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
 
-	message := utils.Message{messagePixel, H, monNom, maCouleur, false}
+	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
 	go envoyerMessageControle(message)
 }
 
 func traiterDebutSauvegarde() {
+	utils.DisplayWarning(monNom, "traiterDebutSauvegarde", "debut de la sauvegarde")
 	maCouleur = utils.Jaune
 	jeSuisInitiateur = true
 	nbEtatsAttendus = N - 1
