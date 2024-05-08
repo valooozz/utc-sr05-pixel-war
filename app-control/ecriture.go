@@ -14,6 +14,7 @@ func envoyerMessage(message string) {
 
 // Envoi un type Message pour les applis de contrôle
 func envoyerMessageControle(message utils.Message) {
+	monBilan++
 	envoyerMessage(utils.MessageToString(message))
 }
 

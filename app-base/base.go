@@ -15,6 +15,9 @@ func sendperiodic() {
 	for i := 0; i < 4; i++ {
 		mutex.Lock()
 		envoyerPixel(i, i, 255, 0, 0)
+		if i == 1 {
+			fmt.Println("sauvegarde")
+		}
 		mutex.Unlock()
 		time.Sleep(time.Duration(2) * time.Second)
 	}
@@ -33,7 +36,7 @@ func lecture() {
 		fmt.Scanln(&rcvmsg)
 
 		if rcvmsg[0] == uint8('A') { // On traite le message s'il commence par un 'A'
-			utils.DisplayError(monNom, "lecture", "Réception de : "+rcvmsg[1:])
+			//utils.DisplayError(monNom, "lecture", "Réception de : "+rcvmsg[1:])
 			mutex.Lock()
 			messagePixel := utils.StringToMessagePixel(rcvmsg[1:])
 			changerPixel(messagePixel)
@@ -44,7 +47,7 @@ func lecture() {
 }
 
 func changerPixel(messagePixel utils.MessagePixel) {
-	utils.DisplayError(monNom, "changerPixel", "Et là bim on change le pixel")
+	//utils.DisplayError(monNom, "changerPixel", "Et là bim on change le pixel")
 }
 
 var mutex = &sync.Mutex{}
@@ -57,7 +60,9 @@ func main() {
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
 	//Création de 2 go routines qui s'exécutent en parallèle
-	go sendperiodic()
+	if monNom[0:2] == "A1" {
+		go sendperiodic()
+	}
 	go lecture()
 	//On décide de bloquer le programme principal
 	for {

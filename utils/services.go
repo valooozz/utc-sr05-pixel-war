@@ -170,6 +170,13 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 	mapMax := make(map[string]int)
 
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
+		for site, _ := range etatLocal.Vectorielle {
+			isProcessed[site] = false
+			mapMax[site] = 0
+		}
+	}
+
+	for _, etatLocal := range etatGlobal.ListEtatLocal {
 		for site, horloge := range etatLocal.Vectorielle {
 			if mapMax[site] < horloge { // Si l'horloge est plus grande que le max enregistré
 				if isProcessed[site] { // Si on a déjà passé le site, la coupure n'est pas cohérente
