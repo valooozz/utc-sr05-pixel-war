@@ -35,6 +35,11 @@ func lecture() {
 	for {
 		fmt.Scanln(&rcvmsg)
 
+		if rcvmsg == "" {
+			utils.DisplayError(monNom, "lecture", "Message vide reçu")
+			continue
+		}
+
 		if rcvmsg[0] == uint8('A') { // On traite le message s'il commence par un 'A'
 			//utils.DisplayError(monNom, "lecture", "Réception de : "+rcvmsg[1:])
 			mutex.Lock()

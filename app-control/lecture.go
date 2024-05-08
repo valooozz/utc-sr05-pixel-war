@@ -11,6 +11,10 @@ func lecture() {
 	var rcvmsg string
 	for {
 		fmt.Scanln(&rcvmsg)
+		if rcvmsg == "" {
+			utils.DisplayWarning(monNom, "lecture", "Message vide reçu")
+			continue
+		}
 		mutex.Lock()
 		// On traite uniquement les messages qui ne commencent pas par un 'A'
 		if rcvmsg[0] != uint8('A') {
@@ -30,7 +34,6 @@ func lecture() {
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
 				traiterMessageEtat(rcvmsg)
 			} else {
-				utils.DisplayWarning(monNom, "lecture", "Message pixel reçu : "+rcvmsg)
 				traiterMessagePixel(rcvmsg)
 			}
 		}
@@ -43,111 +46,113 @@ func lecture() {
 func traiterMessageControle(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 
-	if message.Nom != monNom { // On traite le message uniquement s'il ne vient pas de nous
-		monBilan--
-		utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
-
-		// Extraction de la partie pixel
-		messagePixel := message.Pixel
-
-		// Recalage de l'horloge locale et mise à jour de sa valeur dans le message également
-		H = utils.Recaler(H, message.Horloge)
-		message.Horloge = H
-
-		// Mise à jour de l'horloge vectorielle locale et mise à jour de sa valeur dans le message également
-		horlogeVectorielleIciTmp := horlogeVectorielle[monNom]
-		horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, message.Vectorielle)
-		utils.DisplayInfo(monNom, "Controle", "Maj Vectorielle "+strconv.Itoa(horlogeVectorielleIciTmp)+" -> "+strconv.Itoa(horlogeVectorielle[monNom]))
-		monEtatLocal.Vectorielle = horlogeVectorielle
-		message.Vectorielle = horlogeVectorielle
-
-		// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
-		if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
-			maCouleur = utils.Jaune
-			utils.DisplayError(monNom, "Controle", "Passage en jaune")
-
-			messageEtat := utils.MessageEtat{monEtatLocal, monBilan}
-			utils.DisplayError(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
-			go envoyerMessage(utils.MessageEtatToString(messageEtat))
-
-			// Réception d'un message prépost pas encore marqué comme prépost
-		} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
-			if jeSuisInitiateur {
-				// On ajoute le message reçu à la sauvegarde générale
-				etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
-			} else {
-				utils.DisplayError(monNom, "traiterMessageControle", "Prepost")
-				messagePrepost := message
-				messagePrepost.Prepost = true
-				go envoyerMessageControle(messagePrepost)
-			}
-		}
-
-		message.Couleur = maCouleur
-
-		// On met à jour l'état local
-		monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
-
-		go envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
-		go envoyerMessageBase(messagePixel) // Pour l'app de base
+	// On traite le message uniquement s'il ne vient pas de nous
+	if message.Nom == monNom {
+		return
 	}
+
+	monBilan--
+	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
+
+	// Extraction de la partie pixel
+	messagePixel := message.Pixel
+
+	// Recalage de l'horloge locale et mise à jour de sa valeur dans le message également
+	H = utils.Recaler(H, message.Horloge)
+	message.Horloge = H
+
+	// Mise à jour de l'horloge vectorielle locale et mise à jour de sa valeur dans le message également
+	horlogeVectorielleIciTmp := horlogeVectorielle[monNom]
+	horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, message.Vectorielle)
+	utils.DisplayInfo(monNom, "Controle", "Maj Vectorielle "+strconv.Itoa(horlogeVectorielleIciTmp)+" -> "+strconv.Itoa(horlogeVectorielle[monNom]))
+	message.Vectorielle = horlogeVectorielle
+
+	// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
+	if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
+		maCouleur = utils.Jaune
+		utils.DisplayError(monNom, "Controle", "Passage en jaune")
+
+		messageEtat := utils.MessageEtat{monEtatLocal, monBilan}
+		utils.DisplayError(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
+		go envoyerMessageEtat(messageEtat)
+
+		// Réception d'un message prépost pas encore marqué comme prépost
+	} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
+		if jeSuisInitiateur {
+			// On ajoute le message reçu à la sauvegarde générale
+			etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
+		} else {
+			utils.DisplayError(monNom, "Controle", "Prepost")
+			messagePrepost := message
+			messagePrepost.Prepost = true
+			go envoyerMessageControle(messagePrepost)
+		}
+	}
+
+	message.Couleur = maCouleur
+
+	// On met à jour l'état local
+	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
+	monEtatLocal.Vectorielle = horlogeVectorielle
+
+	go envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
+	go envoyerMessageBase(messagePixel) // Pour l'app de base
+
 }
 
 func traiterMessagePrepost(rcvmsg string) {
-	if jeSuisInitiateur {
-		nbMessagesAttendus--
 
-		// On ajoute le message prepost à la sauvegarde générale
-		message := utils.StringToMessage(rcvmsg)
-		etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
-
-		if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
-			// FIN DE L'ALGORITHME DE SAUVEGARDE
-			utils.DisplayInfo(monNom, "Prepost", "Sauvegarde complétée")
-		}
-	} else {
+	if !jeSuisInitiateur {
 		go envoyerMessage(rcvmsg) // On fait suivre le message sur l'anneau
+	}
+
+	nbMessagesAttendus--
+
+	// On ajoute le message prepost à la sauvegarde générale
+	message := utils.StringToMessage(rcvmsg)
+	etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
+
+	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+		finSauvegarde()
 	}
 }
 
 func traiterMessageEtat(rcvmsg string) {
-	if jeSuisInitiateur {
-		utils.DisplayError(monNom, "Etat", "MessageEtat recu")
-		messageEtat := utils.StringToMessageEtat(rcvmsg)
 
-		// On ajoute l'état local reçu à la sauvegarde générale
-		etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, messageEtat.EtatLocal)
-
-		nbEtatsAttendus--
-		nbMessagesAttendus = nbMessagesAttendus + messageEtat.Bilan
-
-		utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
-		if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
-			// FIN DE L'ALGORITHME DE SAUVEGARDE
-			utils.DisplayError(monNom, "Fin", "Sauvegarde complétée")
-			for _, etatLocal := range etatGlobal.ListEtatLocal {
-				utils.DisplayInfo(monNom, "Fin", utils.EtatLocalToString(etatLocal))
-			}
-			if utils.CoupureEstCoherente(etatGlobal) {
-				utils.DisplayInfo(monNom, "Fin", "COUPURE COHÉRENTE !")
-			}
-		}
-	} else {
+	if !jeSuisInitiateur {
 		utils.DisplayError(monNom, "Etat", "Transfert message etat : "+rcvmsg)
 		go envoyerMessage(rcvmsg)
+		return
+	}
+
+	utils.DisplayError(monNom, "Etat", "MessageEtat recu")
+	messageEtat := utils.StringToMessageEtat(rcvmsg)
+
+	// On ajoute l'état local reçu à la sauvegarde générale
+	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, messageEtat.EtatLocal)
+
+	nbEtatsAttendus--
+	nbMessagesAttendus = nbMessagesAttendus + messageEtat.Bilan
+
+	utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
+	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+		finSauvegarde()
 	}
 }
 
 func traiterMessagePixel(rcvmsg string) {
+	utils.DisplayWarning(monNom, "lecture", "Message pixel reçu : "+rcvmsg)
+
 	messagePixel := utils.StringToMessagePixel(rcvmsg)
 	H++
 
 	horlogeVectorielleIciTmp := horlogeVectorielle[monNom]
 	horlogeVectorielle[monNom]++
-	utils.DisplayInfo(monNom, "Pixel", "Incrémentation Vectorielle ++"+strconv.Itoa(horlogeVectorielleIciTmp)+" -> "+strconv.Itoa(horlogeVectorielle[monNom]))
+	utils.DisplayInfo(monNom, "Pixel", "Incrémentation Vectorielle ++ "+strconv.Itoa(horlogeVectorielleIciTmp)+" -> "+strconv.Itoa(horlogeVectorielle[monNom]))
 
 	// Mise à jour de l'état local
 	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
+	monEtatLocal.Vectorielle = horlogeVectorielle
 
 	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
 	go envoyerMessageControle(message)
@@ -164,4 +169,17 @@ func traiterDebutSauvegarde() {
 
 	// On ajoute l'état local à la sauvegarde générale
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, monEtatLocal)
+}
+
+func finSauvegarde() {
+	utils.DisplayError(monNom, "Fin", "Sauvegarde complétée")
+	for _, etatLocal := range etatGlobal.ListEtatLocal {
+		utils.DisplayInfo(monNom, "Fin", utils.EtatLocalToString(etatLocal))
+	}
+
+	if utils.CoupureEstCoherente(etatGlobal) {
+		utils.DisplayInfo(monNom, "Fin", "COUPURE COHÉRENTE !")
+	} else {
+		utils.DisplayInfo(monNom, "Fin", "Coupure non cohérente...")
+	}
 }

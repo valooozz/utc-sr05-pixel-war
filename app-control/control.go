@@ -30,8 +30,22 @@ func main() {
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
-	monEtatLocal.NomSite = monNom
 	horlogeVectorielle[monNom] = 0
+	monEtatLocal.NomSite = monNom
+	monEtatLocal.Vectorielle = horlogeVectorielle
+
+	/*el1 := utils.EtatLocal{monNom, utils.HorlogeVectorielle{monNom: 3}, []utils.MessagePixel{}}
+	el2 := utils.EtatLocal{"C2", utils.HorlogeVectorielle{monNom: 3, "C2": 3}, []utils.MessagePixel{}}
+	el3 := utils.EtatLocal{"C3", utils.HorlogeVectorielle{monNom: 3, "C2": 2, "C3": 3}, []utils.MessagePixel{}}
+	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, el1)
+	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, el2)
+	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, el3)
+
+	if utils.CoupureEstCoherente(etatGlobal) {
+		fmt.Println("Coupure cohérente")
+	} else {
+		fmt.Println("Coupure non cohérente")
+	}*/
 
 	go lecture()
 	for {

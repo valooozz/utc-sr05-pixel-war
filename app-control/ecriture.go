@@ -18,11 +18,12 @@ func envoyerMessageControle(message utils.Message) {
 	envoyerMessage(utils.MessageToString(message))
 }
 
+// Envoi un type MessageEtat pour les applis de contrôle
+func envoyerMessageEtat(messageEtat utils.MessageEtat) {
+	envoyerMessage(utils.MessageEtatToString(messageEtat))
+}
+
 // Envoi un type MessagePixel pour l'appli de base
 func envoyerMessageBase(messagePixel utils.MessagePixel) {
 	envoyerMessage("A" + utils.MessagePixelToString(messagePixel))
-}
-
-func envoyerMessageEtat(message utils.MessageEtat) {
-
 }

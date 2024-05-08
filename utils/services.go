@@ -169,6 +169,7 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 	isProcessed := make(map[string]bool)
 	mapMax := make(map[string]int)
 
+	// Initialisation
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
 		for site, _ := range etatLocal.Vectorielle {
 			isProcessed[site] = false
