@@ -50,9 +50,9 @@ func traiterMessageControle(rcvmsg string) {
 	if message.Nom == monNom {
 		return
 	}
-
 	monBilan--
-	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
+
+	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg+" monBilanActuel = "+strconv.Itoa(monBilan))
 
 	// Extraction de la partie pixel
 	messagePixel := message.Pixel
@@ -62,9 +62,7 @@ func traiterMessageControle(rcvmsg string) {
 	message.Horloge = H
 
 	// Mise à jour de l'horloge vectorielle locale et mise à jour de sa valeur dans le message également
-	horlogeVectorielleIciTmp := horlogeVectorielle[monNom]
 	horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, message.Vectorielle)
-	utils.DisplayInfo(monNom, "Controle", "Maj Vectorielle "+strconv.Itoa(horlogeVectorielleIciTmp)+" -> "+strconv.Itoa(horlogeVectorielle[monNom]))
 	message.Vectorielle = horlogeVectorielle
 
 	// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
@@ -86,6 +84,7 @@ func traiterMessageControle(rcvmsg string) {
 			messagePrepost := message
 			messagePrepost.Prepost = true
 			go envoyerMessageControle(messagePrepost)
+			monBilan++
 		}
 	}
 
@@ -95,9 +94,10 @@ func traiterMessageControle(rcvmsg string) {
 	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
-	go envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
+	go envoyerMessageControle(message) // Pour la prochaine app de contrôle de l'anneau
+	monBilan++
 	go envoyerMessageBase(messagePixel) // Pour l'app de base
-
+	utils.DisplayInfo(monNom, "Controle", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
 
 func traiterMessagePrepost(rcvmsg string) {
@@ -146,9 +146,7 @@ func traiterMessagePixel(rcvmsg string) {
 	messagePixel := utils.StringToMessagePixel(rcvmsg)
 	H++
 
-	horlogeVectorielleIciTmp := horlogeVectorielle[monNom]
 	horlogeVectorielle[monNom]++
-	utils.DisplayInfo(monNom, "Pixel", "Incrémentation Vectorielle ++ "+strconv.Itoa(horlogeVectorielleIciTmp)+" -> "+strconv.Itoa(horlogeVectorielle[monNom]))
 
 	// Mise à jour de l'état local
 	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
@@ -156,6 +154,7 @@ func traiterMessagePixel(rcvmsg string) {
 
 	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
 	go envoyerMessageControle(message)
+	monBilan++
 }
 
 func traiterDebutSauvegarde() {
