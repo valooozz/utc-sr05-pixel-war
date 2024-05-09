@@ -15,7 +15,7 @@ func sendperiodic() {
 	for i := 0; i < 4; i++ {
 		mutex.Lock()
 		envoyerPixel(i, i, 255, 0, 0)
-		if i == 1 && monNom[0:2] == "A1" {
+		if i == 0 && monNom[0:2] == "A1" {
 			fmt.Println("sauvegarde")
 		}
 		mutex.Unlock()
@@ -65,6 +65,7 @@ func main() {
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
 	//Création de 2 go routines qui s'exécutent en parallèle
+	//|| monNom[0:2] == "A2"
 	if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
 		go sendperiodic()
 	}

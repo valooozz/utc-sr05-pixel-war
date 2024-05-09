@@ -45,12 +45,12 @@ func lecture() {
 // et tout cela avec les bonnes informations mises à jour dans le message : horloge, couleur
 func traiterMessageControle(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
+	monBilan--
 
 	// On traite le message uniquement s'il ne vient pas de nous
 	if message.Nom == monNom {
 		return
 	}
-	monBilan--
 
 	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg+" monBilanActuel = "+strconv.Itoa(monBilan))
 
@@ -155,6 +155,7 @@ func traiterMessagePixel(rcvmsg string) {
 	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
 	go envoyerMessageControle(message)
 	monBilan++
+	utils.DisplayInfo(monNom, "Pixel", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
 
 func traiterDebutSauvegarde() {
