@@ -214,6 +214,20 @@ func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
 	return etatLocal
 }
 
+func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
+	var copie = EtatLocal{
+		NomSite:          etatLocal.NomSite,
+		Vectorielle:      etatLocal.Vectorielle,
+		ListMessagePixel: []MessagePixel{},
+	}
+
+	for _, mp := range etatLocal.ListMessagePixel {
+		copie.ListMessagePixel = append(copie.ListMessagePixel, mp)
+	}
+
+	return copie
+}
+
 func Recaler(x, y int) int {
 	if x < y {
 		return y + 1

@@ -68,24 +68,19 @@ func traiterMessageControle(rcvmsg string) {
 	// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
 	if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
 		maCouleur = utils.Jaune
+
 		utils.DisplayError(monNom, "Controle", "Passage en jaune")
 
 		messageEtat := utils.MessageEtat{monEtatLocal, monBilan}
 		utils.DisplayError(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
-		go envoyerMessageEtat(messageEtat)
+		envoyerMessageEtat(messageEtat)
 
 		// Réception d'un message prépost pas encore marqué comme prépost
 	} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
-		if jeSuisInitiateur {
-			// On ajoute le message reçu à la sauvegarde générale
-			etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
-		} else {
-			utils.DisplayError(monNom, "Controle", "Prepost")
-			messagePrepost := message
-			messagePrepost.Prepost = true
-			go envoyerMessageControle(messagePrepost)
-			monBilan++ // NOPE
-		}
+		utils.DisplayError(monNom, "Controle", "Prepost")
+		messagePrepost := message
+		messagePrepost.Prepost = true
+		envoyerMessageControle(messagePrepost)
 	}
 
 	message.Couleur = maCouleur
@@ -94,16 +89,16 @@ func traiterMessageControle(rcvmsg string) {
 	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
-	go envoyerMessageControle(message) // Pour la prochaine app de contrôle de l'anneau
+	envoyerMessageControle(message) // Pour la prochaine app de contrôle de l'anneau
 	monBilan++
-	go envoyerMessageBase(messagePixel) // Pour l'app de base
+	envoyerMessageBase(messagePixel) // Pour l'app de base
 	utils.DisplayInfo(monNom, "Controle", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
 
 func traiterMessagePrepost(rcvmsg string) {
-
 	if !jeSuisInitiateur {
 		go envoyerMessage(rcvmsg) // On fait suivre le message sur l'anneau
+		return
 	}
 
 	nbMessagesAttendus--
@@ -112,7 +107,7 @@ func traiterMessagePrepost(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 	etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
 
-	if nbEtatsAttendus == 0 { // && nbMessagesAttendus == 0 {
+	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
 		finSauvegarde()
 	}
 }
@@ -129,13 +124,13 @@ func traiterMessageEtat(rcvmsg string) {
 	messageEtat := utils.StringToMessageEtat(rcvmsg)
 
 	// On ajoute l'état local reçu à la sauvegarde générale
-	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, messageEtat.EtatLocal)
+	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(messageEtat.EtatLocal))
 
 	nbEtatsAttendus--
 	nbMessagesAttendus = nbMessagesAttendus + messageEtat.Bilan
 
 	utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
-	if nbEtatsAttendus == 0 { //&& nbMessagesAttendus == 0 {
+	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
 		finSauvegarde()
 	}
 }
@@ -153,7 +148,7 @@ func traiterMessagePixel(rcvmsg string) {
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
 	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
-	go envoyerMessageControle(message)
+	envoyerMessageControle(message)
 	monBilan++
 	utils.DisplayInfo(monNom, "Pixel", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
@@ -171,13 +166,16 @@ func traiterDebutSauvegarde() {
 	for _, mp := range monEtatLocal.ListMessagePixel {
 		utils.DisplayError(monNom, "Debut", utils.MessagePixelToString(mp))
 	}
-	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, monEtatLocal)
+	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(monEtatLocal))
 }
 
 func finSauvegarde() {
 	utils.DisplayError(monNom, "Fin", "Sauvegarde complétée")
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
 		utils.DisplayInfo(monNom, "Fin", utils.EtatLocalToString(etatLocal))
+	}
+	for _, mp := range etatGlobal.ListMessagePrepost {
+		utils.DisplayInfo(monNom, "Fin", utils.MessageToString(mp))
 	}
 
 	if utils.CoupureEstCoherente(etatGlobal) {

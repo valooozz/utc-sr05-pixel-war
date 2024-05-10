@@ -14,15 +14,15 @@ func envoyerMessage(message string) {
 
 // Envoi un type Message pour les applis de contrôle
 func envoyerMessageControle(message utils.Message) {
-	envoyerMessage(utils.MessageToString(message))
+	go envoyerMessage(utils.MessageToString(message))
 }
 
 // Envoi un type MessageEtat pour les applis de contrôle
 func envoyerMessageEtat(messageEtat utils.MessageEtat) {
-	envoyerMessage(utils.MessageEtatToString(messageEtat))
+	go envoyerMessage(utils.MessageEtatToString(messageEtat))
 }
 
 // Envoi un type MessagePixel pour l'appli de base
 func envoyerMessageBase(messagePixel utils.MessagePixel) {
-	envoyerMessage("A" + utils.MessagePixelToString(messagePixel))
+	go envoyerMessage("A" + utils.MessagePixelToString(messagePixel))
 }
