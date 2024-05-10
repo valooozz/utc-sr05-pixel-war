@@ -12,13 +12,16 @@ import (
 
 // Le programme envoie périodiquement des messages sur stdout
 func sendperiodic() {
+	val, _ := strconv.Atoi(monNom[1:2])
 	for i := 0; i < 4; i++ {
 		mutex.Lock()
-		envoyerPixel(i, i, 255, 0, 0)
-		if i == 0 && monNom[0:2] == "A1" {
-			fmt.Println("sauvegarde")
-		}
+		envoyerPixel(i, i, 255, val, 0)
 		mutex.Unlock()
+		if i == 1 && monNom[0:2] == "A1" {
+			mutex.Lock()
+			fmt.Println("sauvegarde")
+			mutex.Unlock()
+		}
 		time.Sleep(time.Duration(2) * time.Second)
 	}
 }

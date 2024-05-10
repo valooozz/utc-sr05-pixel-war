@@ -52,7 +52,7 @@ func traiterMessageControle(rcvmsg string) {
 		return
 	}
 
-	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg+" monBilanActuel = "+strconv.Itoa(monBilan))
+	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
 
 	// Extraction de la partie pixel
 	messagePixel := message.Pixel
@@ -84,14 +84,14 @@ func traiterMessageControle(rcvmsg string) {
 			messagePrepost := message
 			messagePrepost.Prepost = true
 			go envoyerMessageControle(messagePrepost)
-			monBilan++
+			monBilan++ // NOPE
 		}
 	}
 
 	message.Couleur = maCouleur
 
 	// On met à jour l'état local
-	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
+	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
 	go envoyerMessageControle(message) // Pour la prochaine app de contrôle de l'anneau
@@ -112,7 +112,7 @@ func traiterMessagePrepost(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 	etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
 
-	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+	if nbEtatsAttendus == 0 { // && nbMessagesAttendus == 0 {
 		finSauvegarde()
 	}
 }
@@ -135,7 +135,7 @@ func traiterMessageEtat(rcvmsg string) {
 	nbMessagesAttendus = nbMessagesAttendus + messageEtat.Bilan
 
 	utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
-	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+	if nbEtatsAttendus == 0 { //&& nbMessagesAttendus == 0 {
 		finSauvegarde()
 	}
 }
@@ -149,7 +149,7 @@ func traiterMessagePixel(rcvmsg string) {
 	horlogeVectorielle[monNom]++
 
 	// Mise à jour de l'état local
-	monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, messagePixel)
+	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
 	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
@@ -168,6 +168,9 @@ func traiterDebutSauvegarde() {
 	utils.DisplayError(monNom, "Debut", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
 
 	// On ajoute l'état local à la sauvegarde générale
+	for _, mp := range monEtatLocal.ListMessagePixel {
+		utils.DisplayError(monNom, "Debut", utils.MessagePixelToString(mp))
+	}
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, monEtatLocal)
 }
 

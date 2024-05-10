@@ -195,6 +195,25 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 	return true
 }
 
+func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
+	var found = false
+	for i, pixel := range etatLocal.ListMessagePixel {
+		if pixel.PositionX == newMessagePixel.PositionX && pixel.PositionY == newMessagePixel.PositionY {
+			pixel.Rouge = newMessagePixel.Rouge
+			pixel.Vert = newMessagePixel.Vert
+			pixel.Bleu = newMessagePixel.Bleu
+			etatLocal.ListMessagePixel[i] = pixel
+			found = true
+		}
+	}
+
+	if !found {
+		etatLocal.ListMessagePixel = append(etatLocal.ListMessagePixel, newMessagePixel)
+	}
+
+	return etatLocal
+}
+
 func Recaler(x, y int) int {
 	if x < y {
 		return y + 1
