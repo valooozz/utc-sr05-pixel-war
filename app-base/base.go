@@ -70,7 +70,7 @@ func main() {
 	//Création de 2 go routines qui s'exécutent en parallèle
 	//|| monNom[0:2] == "A2"
 	//|| monNom[0:2] == "A2" || monNom[0:2] == "A3"
-	if monNom[0:2] == "A1" {
+	if monNom[0:2] == "A1" || monNom[0:2] == "A2" || monNom[0:2] == "A3" {
 		go sendperiodic()
 	}
 	go lecture()

@@ -109,7 +109,8 @@ func traiterMessagePrepost(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 	etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
 
-	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+	if nbEtatsAttendus == 0 { //&& nbMessagesAttendus == 0 {
+		utils.DisplayInfo(monNom, "Prepost", "Fin par prepost")
 		finSauvegarde()
 	}
 }
@@ -129,10 +130,20 @@ func traiterMessageEtat(rcvmsg string) {
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(messageEtat.EtatLocal))
 
 	nbEtatsAttendus--
-	nbMessagesAttendus = nbMessagesAttendus + messageEtat.Bilan
+	//if nbEtatsAttendus == 0 {
+	//	utils.DisplayInfo("Bilan")
+	//	nbMessagesAttendus = monBilan
+	//}
+	/*
+		nbMessagesAttendus = nbMessagesAttendus + messageEtat.Bilan
+		if nbEtatsAttendus == 0 {
+			nbMessagesAttendus = nbMessagesAttendus + monBilan
+		}
+	*/
 
 	utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
-	if nbEtatsAttendus == 0 && nbMessagesAttendus == 0 {
+	if nbEtatsAttendus == 0 { // && nbMessagesAttendus == 0 {
+		utils.DisplayInfo(monNom, "Etat", "Fin par etat")
 		finSauvegarde()
 	}
 }
@@ -152,7 +163,6 @@ func traiterMessagePixel(rcvmsg string) {
 	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
 	envoyerMessageControle(message)
 	monBilan++
-	utils.DisplayInfo(monNom, "Pixel", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
 
 func traiterDebutSauvegarde() {
