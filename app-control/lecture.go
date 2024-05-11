@@ -51,6 +51,7 @@ func traiterMessageControle(rcvmsg string) {
 	if message.Nom == monNom {
 		return
 	}
+	monBilan++
 
 	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
 
@@ -90,13 +91,14 @@ func traiterMessageControle(rcvmsg string) {
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
 	envoyerMessageControle(message) // Pour la prochaine app de contrôle de l'anneau
-	monBilan++
+	//monBilan++
 	envoyerMessageBase(messagePixel) // Pour l'app de base
 	utils.DisplayInfo(monNom, "Controle", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
 
 func traiterMessagePrepost(rcvmsg string) {
 	if !jeSuisInitiateur {
+		utils.DisplayWarning(monNom, "Prepost", "Prepost transféré : "+rcvmsg)
 		go envoyerMessage(rcvmsg) // On fait suivre le message sur l'anneau
 		return
 	}
@@ -120,8 +122,8 @@ func traiterMessageEtat(rcvmsg string) {
 		return
 	}
 
-	utils.DisplayError(monNom, "Etat", "MessageEtat recu")
 	messageEtat := utils.StringToMessageEtat(rcvmsg)
+	utils.DisplayError(monNom, "Etat", "MessageEtat recu (bilan="+strconv.Itoa(messageEtat.Bilan)+")")
 
 	// On ajoute l'état local reçu à la sauvegarde générale
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(messageEtat.EtatLocal))
