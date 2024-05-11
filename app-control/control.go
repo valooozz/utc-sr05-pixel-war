@@ -33,10 +33,9 @@ func main() {
 	horlogeVectorielle[monNom] = 0
 	monEtatLocal.NomSite = monNom
 	monEtatLocal.Vectorielle = horlogeVectorielle
-	
+
 	go lecture()
 	for {
 		time.Sleep(time.Duration(60) * time.Second)
 	} // Pour attendre la fin des goroutines...
-
 }

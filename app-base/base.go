@@ -10,18 +10,20 @@ import (
 	"utils"
 )
 
+func fiveSecondsSnapshot(n int) {
+	time.Sleep(time.Duration(n) * time.Second)
+	mutex.Lock()
+	fmt.Println("sauvegarde")
+	mutex.Unlock()
+}
+
 // Le programme envoie périodiquement des messages sur stdout
 func sendperiodic() {
 	val, _ := strconv.Atoi(monNom[1:2])
-	for i := 0; i < 4; i++ {
+	for i := 0; i < 8; i++ {
 		mutex.Lock()
 		envoyerPixel(i, i, 255, val, 0)
 		mutex.Unlock()
-		if i == 2 && monNom[0:2] == "A1" {
-			mutex.Lock()
-			fmt.Println("sauvegarde")
-			mutex.Unlock()
-		}
 		time.Sleep(time.Duration(2) * time.Second)
 	}
 }
@@ -63,9 +65,12 @@ var pNom = flag.String("n", "base", "nom")
 var monNom string
 
 func main() {
-
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
+
+	if monNom[0:2] == "A1" {
+		go fiveSecondsSnapshot(5)
+	}
 
 	//Création de 2 go routines qui s'exécutent en parallèle
 	//|| monNom[0:2] == "A2"

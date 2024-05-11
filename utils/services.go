@@ -165,6 +165,17 @@ func MajHorlogeVectorielle(monNom string, locale, recue HorlogeVectorielle) Horl
 	return locale
 }
 
+func CopyHorlogeVectorielle(horlogeVectorielle HorlogeVectorielle) HorlogeVectorielle {
+
+	var copie = HorlogeVectorielle{}
+
+	for key, val := range horlogeVectorielle {
+		copie[key] = val
+	}
+
+	return copie
+}
+
 func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 	isProcessed := make(map[string]bool)
 	mapMax := make(map[string]int)
