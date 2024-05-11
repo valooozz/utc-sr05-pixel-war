@@ -66,7 +66,7 @@ func traiterMessageControle(rcvmsg string) {
 
 		utils.DisplayWarning(monNom, "Controle", "Passage en jaune")
 
-		messageEtat := utils.MessageEtat{monEtatLocal, monBilan}
+		messageEtat := utils.MessageEtat{monEtatLocal}
 		utils.DisplayInfo(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
 		envoyerMessageEtat(messageEtat)
 

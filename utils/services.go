@@ -43,7 +43,7 @@ func EtatLocalToString(etatLocal EtatLocal) string {
 func MessageEtatToString(etat MessageEtat) string {
 	sep1 := "~"
 	sep2 := ","
-	return sep1 + sep2 + "etat" + sep2 + EtatLocalToString(etat.EtatLocal) + sep1 + sep2 + "bilan" + sep2 + strconv.Itoa(etat.Bilan)
+	return sep1 + sep2 + "etat" + sep2 + EtatLocalToString(etat.EtatLocal)
 }
 
 func HorlogeVectorielleToString(horloge HorlogeVectorielle) string {
@@ -107,9 +107,8 @@ func StringToMessage(str string) Message {
 
 func StringToMessageEtat(str string) MessageEtat {
 	etatLocal := StringToEtatLocal(TrouverValeur(str, "etat"))
-	bilan, _ := strconv.Atoi(TrouverValeur(str, "bilan"))
 
-	return MessageEtat{etatLocal, bilan}
+	return MessageEtat{etatLocal}
 }
 
 func StringToEtatLocal(str string) EtatLocal {
