@@ -19,7 +19,6 @@ var monEtatLocal utils.EtatLocal
 var etatGlobal utils.EtatGlobal
 var monBilan = 0
 var nbEtatsAttendus = 0
-var nbMessagesAttendus = 0
 
 var N = 3
 

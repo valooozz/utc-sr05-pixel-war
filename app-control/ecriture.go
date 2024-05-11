@@ -8,7 +8,6 @@ import (
 // Envoi une chaine de caractères sur la sortie standard
 func envoyerMessage(message string) {
 	mutex.Lock()
-	//utils.DisplayWarning(monNom, "Envoi", message)
 	fmt.Println(message)
 	mutex.Unlock()
 }
