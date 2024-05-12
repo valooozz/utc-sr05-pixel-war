@@ -33,6 +33,20 @@ func lecture() {
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
 				traiterMessageEtat(rcvmsg)
+			} else if utils.TrouverValeur(rcvmsg, "typeSC") != "" {
+				traiterMessageDemandeSC(rcvmsg)
+			} else if utils.TrouverValeur(rcvmsg, "estampilleSite") != "" {
+				demande := utils.StringToMessageTypeSC(rcvmsg)
+				switch demande {
+				case utils.Requete:
+					traiterMessageRequete(rcvmsg)
+				case utils.Accuse:
+					traiterMessageAccuse(rcvmsg)
+				case utils.Liberation:
+					traiterMessageLiberation(rcvmsg)
+				default:
+					utils.DisplayError(monNom, "lecture", "Demande de SC non supportée")
+				}
 			} else {
 				traiterMessagePixel(rcvmsg)
 			}
@@ -179,5 +193,77 @@ func finSauvegarde() {
 		envoyerMessageBaseSauvegarde(messageSauvegarde)
 	} else {
 		utils.DisplayError(monNom, "Fin", "Coupure non cohérente...")
+	}
+}
+
+/////////////////////
+// Exclusion mutuelle
+/////////////////////
+
+// APP BASE -> APP CONTROLE
+func traiterMessageDemandeSC(rcvmsg string) {
+	demande := utils.StringToMessageTypeSC(rcvmsg)
+	H++
+	horlogeVectorielle[monNom]++
+	MessageSC := utils.MessageExclusionMutuelle{Type: demande, Estampille: utils.Estampille{Site: Site, Horloge: H}, Horloge: H, Vectorielle: horlogeVectorielle}
+	tabSC[Site] = MessageSC
+	envoyerMessageSCControle(MessageSC)
+}
+
+// APP CONTROL -> APP CONTROL
+func traiterMessageRequete(rcvmsg string) {
+	demande := utils.StringToMessageExclusionMutuelle(rcvmsg)
+
+	if demande.Estampille.Site == Site {
+		return
+	}
+
+	utils.DisplayError(monNom, "Requete", "Message de requete reçu : "+rcvmsg)
+
+	H = utils.Recaler(demande.Horloge, H)
+	demande.Horloge = H
+
+	horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, demande.Vectorielle)
+	demande.Vectorielle = horlogeVectorielle
+
+	tabSC[demande.Estampille.Site] = demande
+
+	//Envoie message accusé
+
+	if utils.QuestionEntreeSC(Site, tabSC) {
+		envoyerMessageSCBase(tabSC[Site].Type)
+	}
+
+	envoyerMessageSCControle(demande)
+}
+
+// APP CONTROL -> APP CONTROL
+func traiterMessageLiberation(rcvmsg string) {
+	liberation := utils.StringToMessageExclusionMutuelle(rcvmsg)
+	H = utils.Recaler(liberation.Horloge, H)
+
+	tabSC[liberation.Estampille.Site] = utils.MessageExclusionMutuelle{
+		Type:       liberation.Type,
+		Estampille: liberation.Estampille,
+	}
+	envoyerMessageSCControle(liberation)
+	if utils.QuestionEntreeSC(Site, tabSC) {
+		envoyerMessageSCBase(tabSC[Site].Type)
+	}
+}
+
+// APP CONTROL -> APP CONTROL
+func traiterMessageAccuse(rcvmsg string) {
+	mess := utils.StringToMessageExclusionMutuelle(rcvmsg)
+	H = utils.Recaler(mess.Horloge, H)
+	if tabSC[mess.Estampille.Site].Type != utils.Requete {
+		tabSC[mess.Estampille.Site] = utils.MessageExclusionMutuelle{
+			Type:       mess.Type,
+			Estampille: mess.Estampille,
+		}
+	}
+	tabSC[mess.Estampille.Site] = utils.MessageExclusionMutuelle{Type: utils.Accuse, Estampille: utils.Estampille{Site: mess.Estampille.Site, Horloge: H}}
+	if utils.QuestionEntreeSC(Site, tabSC) {
+		envoyerMessageSCBase(tabSC[Site].Type)
 	}
 }

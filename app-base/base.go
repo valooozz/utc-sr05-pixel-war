@@ -20,9 +20,10 @@ func fiveSecondsSnapshot(n int) {
 func sendperiodic() {
 	val, _ := strconv.Atoi(monNom[1:2])
 	for i := 0; i < 8; i++ {
-		mutex.Lock()
+		demandeSC()
+		//updateMatriceFront()
 		envoyerPixel(i, i, 255, val, 0)
-		mutex.Unlock()
+		relacherSC()
 		time.Sleep(time.Duration(2) * time.Second)
 	}
 }
@@ -32,15 +33,16 @@ var pNom = flag.String("n", "base", "nom")
 var pPath = flag.String("p", "./sauvegardes", "path")
 var monNom string
 var cheminSauvegardes string
+var accesSC = false
 
 func main() {
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
 
-	if monNom[0:2] == "A1" {
-		go fiveSecondsSnapshot(5)
-	}
+	//if monNom[0:2] == "A1" {
+	//	go fiveSecondsSnapshot(5)
+	//}
 
 	//Création de 2 go routines qui s'exécutent en parallèle
 	//|| monNom[0:2] == "A2"

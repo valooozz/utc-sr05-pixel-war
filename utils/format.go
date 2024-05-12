@@ -176,3 +176,41 @@ func StringToHorlogeVectorielle(str string) HorlogeVectorielle {
 
 	return horloge
 }
+
+/////////////////////
+// Exclusion mutuelle
+/////////////////////
+
+// TESTER ET VALIDE
+// Permet de transformer un message string en message Exclusion mutuelle
+func MessageExclusionMutuelleToString(exclumutuelle MessageExclusionMutuelle) string {
+	return sepM + sepP + "typeSC" + sepP + strconv.Itoa(int(exclumutuelle.Type)) + sepM + sepP + "estampilleSite" + sepP +
+		strconv.Itoa(exclumutuelle.Estampille.Site) + sepM + sepP + "estampilleHorloge" +
+		sepP + strconv.Itoa(exclumutuelle.Estampille.Horloge) + sepM + sepP + "vectorielle" + sepP + HorlogeVectorielleToString(exclumutuelle.Vectorielle) +
+		sepM + sepP + "horloge" + sepP + strconv.Itoa(exclumutuelle.Horloge)
+}
+
+// TESTER ET VALIDE
+// Permet de transformer
+func MessageTypeSCToString(exclumutuelle TypeSC) string {
+	return sepM + sepP + "typeSC" + sepP + strconv.Itoa(int(exclumutuelle))
+}
+
+// TESTER ET VALIDER
+func StringToMessageExclusionMutuelle(str string) MessageExclusionMutuelle {
+	t, _ := strconv.Atoi(TrouverValeur(str, "typeSC"))
+	s, _ := strconv.Atoi(TrouverValeur(str, "estampilleSite"))
+	h, _ := strconv.Atoi(TrouverValeur(str, "estampilleHorloge"))
+	e := Estampille{s, h}
+	v := StringToHorlogeVectorielle(TrouverValeur(str, "vectorielle"))
+	horloge, _ := strconv.Atoi(TrouverValeur(str, "horloge"))
+	messageecxlumutuelle := MessageExclusionMutuelle{TypeSC(t), e, horloge, v}
+	return messageecxlumutuelle
+}
+
+// TESTER ET VALIDE
+func StringToMessageTypeSC(str string) TypeSC {
+	t, _ := strconv.Atoi(TrouverValeur(str, "typeSC"))
+	messageecxlumutuelle := TypeSC(t)
+	return messageecxlumutuelle
+}

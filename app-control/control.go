@@ -20,12 +20,15 @@ var etatGlobal utils.EtatGlobal
 var nbEtatsAttendus = 0
 
 var N = 3
+var tabSC []utils.MessageExclusionMutuelle
 
 var pNom = flag.String("n", "controle", "nom")
 var monNom string
+var Site int
 
 func main() {
 	flag.Parse()
+	Site = utils.InitialisationNumSite(*pNom) - 1
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
 	horlogeVectorielle[monNom] = 0

@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"strconv"
 	"strings"
 )
 
@@ -158,6 +159,36 @@ func ReconstituerCarteOld(etatGlobal EtatGlobal) []MessagePixel {
 	}
 
 	return carte
+}
+
+////////////////////
+// Exclusion mutuelle
+////////////////////
+
+// Tester et valider
+func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
+	cpt := 0
+	if tabSC[site].Type == Requete {
+		for otherSites := 0; otherSites < len(tabSC); otherSites++ {
+			if otherSites != site && tabSC[otherSites].Estampille.Horloge > tabSC[site].Estampille.Horloge {
+				cpt++
+			}
+		}
+		if cpt == len(tabSC)-1 {
+			return true
+		} else {
+			return false
+		}
+	}
+	return false
+}
+
+// Tester et valider
+func InitialisationNumSite(site string) int {
+	StartNumberIndex := 1
+	SiteString := site[StartNumberIndex:len(site)]
+	NumSite, _ := strconv.Atoi(SiteString)
+	return NumSite
 }
 
 ////////////////////

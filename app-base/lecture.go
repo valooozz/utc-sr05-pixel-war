@@ -26,6 +26,8 @@ func lecture() {
 				traiterMessageSauvegarde(rcvmsg[1:])
 			} else if utils.TrouverValeur(rcvmsg[1:], "positionX") != "" {
 				traiterMessagePixel(rcvmsg[1:])
+			} else if utils.TrouverValeur(rcvmsg[1:], "typeSC") != "" {
+				traiterMessageTypeSC()
 			} else {
 				utils.DisplayError(monNom, "lecture", "Message non supporté")
 			}
@@ -82,6 +84,11 @@ func traiterMessageSauvegarde(str string) {
 
 	//Notification au frontend
 	//A FAIRE UNE FOIS LE FRONTEND TERMINÉ
+}
+
+func traiterMessageTypeSC() {
+	//mettre le boolean acces à true
+	accesSC = true
 }
 
 func changerPixel(messagePixel utils.MessagePixel) {

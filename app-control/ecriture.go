@@ -31,3 +31,19 @@ func envoyerMessageBase(messagePixel utils.MessagePixel) {
 func envoyerMessageBaseSauvegarde(messageSauvegarde utils.MessageSauvegarde) {
 	go envoyerMessage("A" + utils.MessageSauvegardeToString(messageSauvegarde))
 }
+
+/////////////////////
+// Exclusion mutuelle
+/////////////////////
+
+// Traite accusé, demande et libération, APP CONTROL -> APP CONTROL
+func envoyerMessageSCControle(msgSC utils.MessageExclusionMutuelle) {
+	msg := utils.MessageExclusionMutuelleToString(msgSC)
+	go envoyerMessage(msg)
+}
+
+// Communication APP BASE <-> APP CONTROLE
+func envoyerMessageSCBase(msgSC utils.TypeSC) {
+	msg := utils.MessageTypeSCToString(msgSC)
+	fmt.Println(msg)
+}

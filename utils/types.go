@@ -49,3 +49,30 @@ type MessageEtat struct {
 }
 
 type HorlogeVectorielle map[string]int
+
+/////////////////////
+// Exclusion mutuelle
+/////////////////////
+
+// Estampille
+type Estampille struct {
+	Site    int
+	Horloge int
+}
+
+// Type de demande d'accès à la section critique (accès, libération)
+type TypeSC int
+
+const (
+	Requete    TypeSC = 0
+	Liberation TypeSC = 1
+	Accuse     TypeSC = 2
+)
+
+// Message pour la demande d'accès à la section critique
+type MessageExclusionMutuelle struct {
+	Type        TypeSC
+	Estampille  Estampille
+	Horloge     int
+	Vectorielle HorlogeVectorielle
+}
