@@ -97,7 +97,7 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
 	var found = false
 	for i, pixel := range etatLocal.ListMessagePixel {
-		if pixel.PositionX == newMessagePixel.PositionX && pixel.PositionY == newMessagePixel.PositionY {
+		if memePosition(pixel, newMessagePixel) {
 			pixel.Rouge = newMessagePixel.Rouge
 			pixel.Vert = newMessagePixel.Vert
 			pixel.Bleu = newMessagePixel.Bleu
@@ -125,4 +125,89 @@ func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
 	}
 
 	return copie
+}
+
+func ReconstituerCarte(etatGlobal EtatGlobal) []MessagePixel {
+	var carte = etatGlobal.ListEtatLocal[0].ListMessagePixel
+	var pixel MessagePixel
+
+	for _, message := range etatGlobal.ListMessagePrepost {
+		pixel = message.Pixel
+		carte = replaceOrAddPixel(carte, pixel)
+	}
+
+	return carte
+}
+
+func ReconstituerCarteOld(etatGlobal EtatGlobal) []MessagePixel {
+	var carte = etatGlobal.ListEtatLocal[0].ListMessagePixel
+
+	for _, etatLocal := range etatGlobal.ListEtatLocal[1:] {
+		for i, pixel := range etatLocal.ListMessagePixel {
+			if i-1 > len(carte) {
+				carte = append(carte, pixel)
+				continue
+			}
+			if memePosition(carte[i], pixel) && !memeCouleur(carte[i], pixel) {
+				found, prepost := getPrepostOnSamePosition(pixel, etatGlobal.ListMessagePrepost)
+				if found {
+					carte[i] = prepost
+				}
+			}
+		}
+	}
+
+	return carte
+}
+
+////////////////////
+// FONCTIONS PRIVEES
+////////////////////
+
+func memePosition(pixel1, pixel2 MessagePixel) bool {
+	if pixel1.PositionX == pixel2.PositionX && pixel1.PositionY == pixel2.PositionY {
+		return true
+	}
+	return false
+}
+
+func memeCouleur(pixel1, pixel2 MessagePixel) bool {
+	if pixel1.Rouge == pixel2.Rouge && pixel1.Vert == pixel2.Vert && pixel1.Bleu == pixel2.Bleu {
+		return true
+	}
+	return false
+}
+
+func replaceOrAddPixel(carte []MessagePixel, newPixel MessagePixel) []MessagePixel {
+	var found = false
+
+	for i, pixel := range carte {
+		if memePosition(pixel, newPixel) {
+			carte[i] = newPixel
+			found = true
+		}
+	}
+
+	if !found {
+		carte = append(carte, newPixel)
+	}
+
+	return carte
+}
+
+func getPrepostOnSamePosition(pixelReference MessagePixel, listPrepost []Message) (bool, MessagePixel) {
+	var pixel MessagePixel
+	var pixelFound MessagePixel
+	var found = false
+
+	for _, message := range listPrepost {
+		pixel = message.Pixel
+		if memePosition(pixel, pixelReference) {
+			pixelFound = pixel
+			found = true
+			break
+		}
+	}
+
+	return found, pixelFound
 }
