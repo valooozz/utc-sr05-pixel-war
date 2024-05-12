@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
+	"time"
 	"utils"
 )
 
@@ -39,10 +42,46 @@ func traiterMessagePixel(str string) {
 
 func traiterMessageSauvegarde(str string) {
 	messageSauvegarde := utils.StringToMessageSauvegarde(str)
-	utils.DisplayError(monNom, "lecture", "Message sauvegarde reçu : "+utils.MessageSauvegardeToString(messageSauvegarde))
+	utils.DisplayWarning(monNom, "lecture", "Message sauvegarde reçu : "+utils.MessageSauvegardeToString(messageSauvegarde))
 
 	//Traitement du message de sauvegarde : enregistrement dans un fichier et notification au frontend
-	//Ecrire les champs "date" et "pixels" dans un fichier
+
+	//Ecrire les champs "date" et "pixels" dans un fichier .pw
+	if cheminSauvegardes[len(cheminSauvegardes)-1] != '/' {
+		cheminSauvegardes = cheminSauvegardes + "/"
+	}
+	now := time.Now()
+	fileName := now.Format("2006-01-02_15:04:05") + ".pw"
+	fichier, err := os.Create(cheminSauvegardes + fileName)
+	if err != nil {
+		utils.DisplayError(monNom, "traiterMessageSauvegarde", "Erreur lors de la création du fichier :"+err.Error())
+		return
+	}
+	writer := bufio.NewWriter(fichier)
+
+	_, err = writer.WriteString(utils.HorlogeVectorielleToString(messageSauvegarde.Vectorielle) + "\n")
+	if err != nil {
+		utils.DisplayError(monNom, "traiterMessageSauvegarde", "Erreur lors de l'écriture dans le fichier :"+err.Error())
+		return
+	}
+
+	for _, mp := range messageSauvegarde.ListMessagePixel {
+		_, err := writer.WriteString(utils.MessagePixelToString(mp) + "\n")
+		if err != nil {
+			utils.DisplayError(monNom, "traiterMessageSauvegarde", "Erreur lors de l'écriture dans le fichier :"+err.Error())
+			return
+		}
+	}
+	err = writer.Flush()
+	if err != nil {
+		utils.DisplayError(monNom, "traiterMessageSauvegarde", "Erreur lors du vidage du tampon dans le fichier :"+err.Error())
+		return
+	}
+	utils.DisplayWarning(monNom, "traiterMessageSauvegarde", "Écriture dans le fichier terminée avec succès.")
+	fichier.Close()
+
+	//Notification au frontend
+	//A FAIRE UNE FOIS LE FRONTEND TERMINÉ
 }
 
 func changerPixel(messagePixel utils.MessagePixel) {

@@ -29,11 +29,14 @@ func sendperiodic() {
 
 var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "base", "nom")
+var pPath = flag.String("p", "./sauvegardes", "path")
 var monNom string
+var cheminSauvegardes string
 
 func main() {
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
+	cheminSauvegardes = *pPath
 
 	if monNom[0:2] == "A1" {
 		go fiveSecondsSnapshot(5)
