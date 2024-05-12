@@ -120,16 +120,16 @@ func traiterMessageEtat(rcvmsg string) {
 	}
 
 	messageEtat := utils.StringToMessageEtat(rcvmsg)
-	utils.DisplayWarning(monNom, "Etat", "MessageEtat recu")
+	utils.DisplayInfo(monNom, "Etat", "MessageEtat recu")
 
 	// On ajoute l'état local reçu à la sauvegarde générale
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(messageEtat.EtatLocal))
 
 	nbEtatsAttendus--
 
-	utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus))
+	utils.DisplayWarning(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus))
 	if nbEtatsAttendus == 0 {
-		utils.DisplayInfo(monNom, "Etat", "Fin par etat")
+		utils.DisplayWarning(monNom, "Etat", "Fin par etat")
 		finSauvegarde()
 	}
 }
@@ -164,15 +164,20 @@ func traiterDebutSauvegarde() {
 func finSauvegarde() {
 	utils.DisplayWarning(monNom, "Fin", "Sauvegarde complétée")
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
-		utils.DisplayInfo(monNom, "Fin", utils.EtatLocalToString(etatLocal))
+		utils.DisplayWarning(monNom, "Fin", utils.EtatLocalToString(etatLocal))
 	}
 	for _, mp := range etatGlobal.ListMessagePrepost {
-		utils.DisplayInfo(monNom, "Fin", utils.MessageToString(mp))
+		utils.DisplayWarning(monNom, "Fin", utils.MessageToString(mp))
 	}
 
-	if utils.CoupureEstCoherente(etatGlobal) {
+	coherente, maxVectorielle := utils.CoupureEstCoherente(etatGlobal)
+
+	if coherente {
 		utils.DisplayWarning(monNom, "Fin", "COUPURE COHÉRENTE !")
+		configurationGlobale := utils.ReconstituerCarte(etatGlobal)
+		messageSauvegarde := utils.MessageSauvegarde{ListMessagePixel: configurationGlobale, Vectorielle: maxVectorielle}
+		envoyerMessageBaseSauvegarde(messageSauvegarde)
 	} else {
-		utils.DisplayWarning(monNom, "Fin", "Coupure non cohérente...")
+		utils.DisplayError(monNom, "Fin", "Coupure non cohérente...")
 	}
 }

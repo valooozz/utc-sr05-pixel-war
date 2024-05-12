@@ -64,7 +64,7 @@ func CopyHorlogeVectorielle(horlogeVectorielle HorlogeVectorielle) HorlogeVector
 	return copie
 }
 
-func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
+func CoupureEstCoherente(etatGlobal EtatGlobal) (bool, map[string]int) {
 	isProcessed := make(map[string]bool)
 	mapMax := make(map[string]int)
 
@@ -80,18 +80,18 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 		for site, horloge := range etatLocal.Vectorielle {
 			if mapMax[site] < horloge { // Si l'horloge est plus grande que le max enregistré
 				if isProcessed[site] { // Si on a déjà passé le site, la coupure n'est pas cohérente
-					return false
+					return false, mapMax
 				} else { // Sinon, on met à jour le max
 					mapMax[site] = horloge
 				}
 			} else if mapMax[site] > horloge && etatLocal.NomSite == site {
-				return false // Si le max du site est plus grand que l'horloge de ce site sur ce site, la coupure n'est pas cohérente
+				return false, mapMax // Si le max du site est plus grand que l'horloge de ce site sur ce site, la coupure n'est pas cohérente
 			}
 		}
 		isProcessed[etatLocal.NomSite] = true // Le site a été process
 	}
 
-	return true
+	return true, mapMax
 }
 
 func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {

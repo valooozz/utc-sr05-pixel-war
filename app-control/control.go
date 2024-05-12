@@ -17,7 +17,6 @@ var maCouleur = utils.Blanc
 var jeSuisInitiateur = false
 var monEtatLocal utils.EtatLocal
 var etatGlobal utils.EtatGlobal
-var monBilan = 0
 var nbEtatsAttendus = 0
 
 var N = 3

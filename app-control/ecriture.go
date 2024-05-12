@@ -26,3 +26,8 @@ func envoyerMessageEtat(messageEtat utils.MessageEtat) {
 func envoyerMessageBase(messagePixel utils.MessagePixel) {
 	go envoyerMessage("A" + utils.MessagePixelToString(messagePixel))
 }
+
+// Envoi un type MessageSauvegarde pour l'appli de base
+func envoyerMessageBaseSauvegarde(messageSauvegarde utils.MessageSauvegarde) {
+	go envoyerMessage("A" + utils.MessageSauvegardeToString(messageSauvegarde))
+}

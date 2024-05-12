@@ -19,6 +19,11 @@ type MessagePixel struct {
 	Bleu      int
 }
 
+type MessageSauvegarde struct {
+	ListMessagePixel []MessagePixel
+	Vectorielle      HorlogeVectorielle
+}
+
 type Message struct {
 	Pixel       MessagePixel
 	Horloge     int

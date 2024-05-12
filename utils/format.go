@@ -26,6 +26,41 @@ func StringToMessagePixel(str string) MessagePixel {
 	return messagepixel
 }
 
+////////////
+// MessageSauvegarde
+////////////
+
+func MessageSauvegardeToString(sauvegarde MessageSauvegarde) string {
+	sep1 := "#"
+	sep2 := ";"
+	l := ""
+	for _, messagePixel := range sauvegarde.ListMessagePixel {
+		l += "_"
+		l += MessagePixelToString(messagePixel)
+	}
+
+	return sep1 + sep2 + "vectorielle" + sep2 + HorlogeVectorielleToString(sauvegarde.Vectorielle) + sep1 + sep2 + "listSauvegarde" + sep2 + l
+}
+
+func StringToMessageSauvegarde(str string) MessageSauvegarde {
+	listSauvegarde := TrouverValeur(str, "listSauvegarde")
+	tabListSauvegarde := strings.Split(listSauvegarde, "_")
+
+	messageSauvegarde := MessageSauvegarde{}
+	var liste []MessagePixel
+
+	for _, strMessagePixel := range tabListSauvegarde {
+		if strMessagePixel != "" {
+			liste = append(liste, StringToMessagePixel(strMessagePixel))
+		}
+	}
+
+	messageSauvegarde.ListMessagePixel = liste
+	messageSauvegarde.Vectorielle = StringToHorlogeVectorielle(TrouverValeur(str, "vectorielle"))
+
+	return messageSauvegarde
+}
+
 //////////
 // Message
 //////////
