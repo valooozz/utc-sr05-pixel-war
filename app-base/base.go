@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"utils"
 )
 
 func fiveSecondsSnapshot(n int) {
@@ -26,6 +27,7 @@ func sendperiodic() {
 		relacherSC()
 		time.Sleep(time.Duration(2) * time.Second)
 	}
+	utils.DisplayError(monNom, "sendperiodic", "J'AI FINIT MON PROGRAMME")
 }
 
 var mutex = &sync.Mutex{}

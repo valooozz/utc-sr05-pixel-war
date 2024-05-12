@@ -186,8 +186,7 @@ func StringToHorlogeVectorielle(str string) HorlogeVectorielle {
 func MessageExclusionMutuelleToString(exclumutuelle MessageExclusionMutuelle) string {
 	return sepM + sepP + "typeSC" + sepP + strconv.Itoa(int(exclumutuelle.Type)) + sepM + sepP + "estampilleSite" + sepP +
 		strconv.Itoa(exclumutuelle.Estampille.Site) + sepM + sepP + "estampilleHorloge" +
-		sepP + strconv.Itoa(exclumutuelle.Estampille.Horloge) + sepM + sepP + "vectorielle" + sepP + HorlogeVectorielleToString(exclumutuelle.Vectorielle) +
-		sepM + sepP + "horloge" + sepP + strconv.Itoa(exclumutuelle.Horloge)
+		sepP + strconv.Itoa(exclumutuelle.Estampille.Horloge)
 }
 
 // TESTER ET VALIDE
@@ -198,13 +197,11 @@ func MessageTypeSCToString(exclumutuelle TypeSC) string {
 
 // TESTER ET VALIDER
 func StringToMessageExclusionMutuelle(str string) MessageExclusionMutuelle {
-	t, _ := strconv.Atoi(TrouverValeur(str, "typeSC"))
-	s, _ := strconv.Atoi(TrouverValeur(str, "estampilleSite"))
-	h, _ := strconv.Atoi(TrouverValeur(str, "estampilleHorloge"))
-	e := Estampille{s, h}
-	v := StringToHorlogeVectorielle(TrouverValeur(str, "vectorielle"))
-	horloge, _ := strconv.Atoi(TrouverValeur(str, "horloge"))
-	messageecxlumutuelle := MessageExclusionMutuelle{TypeSC(t), e, horloge, v}
+	typeSC, _ := strconv.Atoi(TrouverValeur(str, "typeSC"))
+	site, _ := strconv.Atoi(TrouverValeur(str, "estampilleSite"))
+	horloge, _ := strconv.Atoi(TrouverValeur(str, "estampilleHorloge"))
+	estampille := Estampille{site, horloge}
+	messageecxlumutuelle := MessageExclusionMutuelle{TypeSC(typeSC), estampille}
 	return messageecxlumutuelle
 }
 
@@ -213,4 +210,19 @@ func StringToMessageTypeSC(str string) TypeSC {
 	t, _ := strconv.Atoi(TrouverValeur(str, "typeSC"))
 	messageecxlumutuelle := TypeSC(t)
 	return messageecxlumutuelle
+}
+
+func MessageAccuseToString(message MessageAccuse) string {
+	return sepM + sepP + "siteCible" + sepP + strconv.Itoa(message.SiteCible) + sepM + sepP + "estampilleSite" + sepP +
+		strconv.Itoa(message.Estampille.Site) + sepM + sepP + "estampilleHorloge" +
+		sepP + strconv.Itoa(message.Estampille.Horloge)
+}
+
+func StringToMessageAccuse(str string) MessageAccuse {
+	s, _ := strconv.Atoi(TrouverValeur(str, "siteCible"))
+	site, _ := strconv.Atoi(TrouverValeur(str, "estampilleSite"))
+	horloge, _ := strconv.Atoi(TrouverValeur(str, "estampilleHorloge"))
+	estampille := Estampille{site, horloge}
+	message := MessageAccuse{s, estampille}
+	return message
 }

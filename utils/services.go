@@ -161,24 +161,42 @@ func ReconstituerCarteOld(etatGlobal EtatGlobal) []MessagePixel {
 	return carte
 }
 
-////////////////////
+/////////////////////
 // Exclusion mutuelle
-////////////////////
+/////////////////////
 
 // Tester et valider
 func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 	cpt := 0
-	if tabSC[site].Type == Requete {
-		for otherSites := 0; otherSites < len(tabSC); otherSites++ {
-			if otherSites != site && tabSC[otherSites].Estampille.Horloge > tabSC[site].Estampille.Horloge {
-				cpt++
-			}
+
+	if tabSC[site].Type != Requete {
+		return false
+	}
+
+	for i := 0; i < len(tabSC); i++ {
+		DisplayInfo("site"+strconv.Itoa(site), "Question", "tabSC["+strconv.Itoa(i)+"]="+strconv.Itoa(int(tabSC[i].Type))+" | "+strconv.Itoa(tabSC[i].Estampille.Horloge))
+	}
+	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
+		if numOtherSite == site {
+			continue
 		}
-		if cpt == len(tabSC)-1 {
-			return true
-		} else {
+
+		if tabSC[site].Estampille.Horloge > tabSC[numOtherSite].Estampille.Horloge {
 			return false
 		}
+		if tabSC[site].Estampille.Horloge < tabSC[numOtherSite].Estampille.Horloge {
+			cpt++
+		} else {
+			if tabSC[site].Estampille.Site > tabSC[numOtherSite].Estampille.Site {
+				return false
+			}
+			cpt++
+		}
+	}
+
+	if cpt == len(tabSC)-1 {
+		DisplayInfo("Coucou", "Question", "Accepté pour "+strconv.Itoa(site))
+		return true
 	}
 	return false
 }

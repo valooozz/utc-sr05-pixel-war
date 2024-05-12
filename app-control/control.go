@@ -20,16 +20,23 @@ var etatGlobal utils.EtatGlobal
 var nbEtatsAttendus = 0
 
 var N = 3
-var tabSC []utils.MessageExclusionMutuelle
+var tabSC = make([]utils.MessageExclusionMutuelle, N)
 
 var pNom = flag.String("n", "controle", "nom")
 var monNom string
 var Site int
 
+var HEM = 0
+
 func main() {
 	flag.Parse()
 	Site = utils.InitialisationNumSite(*pNom) - 1
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
+
+	for i := 0; i < len(tabSC); i++ {
+		tabSC[i].Type = utils.Liberation
+		tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
+	}
 
 	horlogeVectorielle[monNom] = 0
 	monEtatLocal.NomSite = monNom

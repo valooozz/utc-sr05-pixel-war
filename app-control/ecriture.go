@@ -42,8 +42,13 @@ func envoyerMessageSCControle(msgSC utils.MessageExclusionMutuelle) {
 	go envoyerMessage(msg)
 }
 
+func envoyerMessageAccuse(msgAcc utils.MessageAccuse) {
+	msg := utils.MessageAccuseToString(msgAcc)
+	fmt.Println(msg)
+}
+
 // Communication APP BASE <-> APP CONTROLE
 func envoyerMessageSCBase(msgSC utils.TypeSC) {
-	msg := utils.MessageTypeSCToString(msgSC)
+	msg := "A" + utils.MessageTypeSCToString(msgSC)
 	fmt.Println(msg)
 }

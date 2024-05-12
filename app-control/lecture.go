@@ -13,7 +13,7 @@ func lecture() {
 		fmt.Scanln(&rcvmsg)
 		if rcvmsg == "" {
 			utils.DisplayError(monNom, "lecture", "Message vide reçu -> Fin du processus")
-			break
+			continue
 		}
 		mutex.Lock()
 		// On traite uniquement les messages qui ne commencent pas par un 'A'
@@ -33,20 +33,20 @@ func lecture() {
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
 				traiterMessageEtat(rcvmsg)
-			} else if utils.TrouverValeur(rcvmsg, "typeSC") != "" {
-				traiterMessageDemandeSC(rcvmsg)
+			} else if utils.TrouverValeur(rcvmsg, "siteCible") != "" {
+				traiterMessageAccuse(rcvmsg)
 			} else if utils.TrouverValeur(rcvmsg, "estampilleSite") != "" {
 				demande := utils.StringToMessageTypeSC(rcvmsg)
 				switch demande {
 				case utils.Requete:
 					traiterMessageRequete(rcvmsg)
-				case utils.Accuse:
-					traiterMessageAccuse(rcvmsg)
 				case utils.Liberation:
 					traiterMessageLiberation(rcvmsg)
 				default:
 					utils.DisplayError(monNom, "lecture", "Demande de SC non supportée")
 				}
+			} else if utils.TrouverValeur(rcvmsg, "typeSC") != "" {
+				traiterMessageSC(rcvmsg)
 			} else {
 				traiterMessagePixel(rcvmsg)
 			}
@@ -201,57 +201,68 @@ func finSauvegarde() {
 /////////////////////
 
 // APP BASE -> APP CONTROLE
-func traiterMessageDemandeSC(rcvmsg string) {
+func traiterMessageSC(rcvmsg string) {
+	utils.DisplayWarning(monNom, "SC", "MessageSC reçu"+rcvmsg)
 	demande := utils.StringToMessageTypeSC(rcvmsg)
-	H++
-	horlogeVectorielle[monNom]++
-	MessageSC := utils.MessageExclusionMutuelle{Type: demande, Estampille: utils.Estampille{Site: Site, Horloge: H}, Horloge: H, Vectorielle: horlogeVectorielle}
-	tabSC[Site] = MessageSC
-	envoyerMessageSCControle(MessageSC)
+	HEM++
+	message := utils.MessageExclusionMutuelle{Type: demande, Estampille: utils.Estampille{Site: Site, Horloge: HEM}}
+	tabSC[Site] = message
+	envoyerMessageSCControle(message)
 }
 
 // APP CONTROL -> APP CONTROL
 func traiterMessageRequete(rcvmsg string) {
 	demande := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
-	if demande.Estampille.Site == Site {
-		return
+	if demande.Estampille.Site != Site {
+		utils.DisplayError(monNom, "Requete", "Message de requete reçu et forwardé : "+rcvmsg)
+		HEM = utils.Recaler(demande.Estampille.Horloge, HEM)
+		tabSC[demande.Estampille.Site] = demande
+		envoyerMessageAccuse(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
+		envoyerMessageSCControle(demande)
 	}
 
-	utils.DisplayError(monNom, "Requete", "Message de requete reçu : "+rcvmsg)
-
-	H = utils.Recaler(demande.Horloge, H)
-	demande.Horloge = H
-
-	horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, demande.Vectorielle)
-	demande.Vectorielle = horlogeVectorielle
-
-	tabSC[demande.Estampille.Site] = demande
-
-	//Envoie message accusé
-
+	utils.DisplayError(monNom, "Requete", "On regarde si on peut accepter la SC")
 	if utils.QuestionEntreeSC(Site, tabSC) {
+		utils.DisplayError(monNom, "Requete", "SC acceptée !")
 		envoyerMessageSCBase(tabSC[Site].Type)
 	}
-
-	envoyerMessageSCControle(demande)
 }
 
 // APP CONTROL -> APP CONTROL
 func traiterMessageLiberation(rcvmsg string) {
 	liberation := utils.StringToMessageExclusionMutuelle(rcvmsg)
-	H = utils.Recaler(liberation.Horloge, H)
 
-	tabSC[liberation.Estampille.Site] = utils.MessageExclusionMutuelle{
-		Type:       liberation.Type,
-		Estampille: liberation.Estampille,
+	if liberation.Estampille.Site != Site {
+		utils.DisplayError(monNom, "Liberation", "Message de liberation reçu et forwardé : "+rcvmsg)
+		HEM = utils.Recaler(liberation.Estampille.Horloge, HEM)
+		tabSC[liberation.Estampille.Site] = liberation
+		envoyerMessageSCControle(liberation)
 	}
-	envoyerMessageSCControle(liberation)
+
+	utils.DisplayError(monNom, "Liberation", "On regarde si on peut accepter la SC")
 	if utils.QuestionEntreeSC(Site, tabSC) {
+		utils.DisplayError(monNom, "Liberation", "SC acceptée !")
 		envoyerMessageSCBase(tabSC[Site].Type)
 	}
 }
 
+func traiterMessageAccuse(rcvmsg string) {
+	message := utils.StringToMessageAccuse(rcvmsg)
+
+	if Site != message.SiteCible {
+		utils.DisplayError(monNom, "Accuse", "Message d'accusé reçu et forwardé : "+rcvmsg)
+		fmt.Println(rcvmsg)
+		return
+	}
+
+	utils.DisplayWarning(monNom, "Accuse", "Message d'accusé pour moi")
+	//HEM = utils.Recaler(message.Estampille.Horloge, HEM)
+	tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
+}
+
+/// A SUPPRIMER
+/*
 // APP CONTROL -> APP CONTROL
 func traiterMessageAccuse(rcvmsg string) {
 	mess := utils.StringToMessageExclusionMutuelle(rcvmsg)
@@ -267,3 +278,6 @@ func traiterMessageAccuse(rcvmsg string) {
 		envoyerMessageSCBase(tabSC[Site].Type)
 	}
 }
+
+
+*/

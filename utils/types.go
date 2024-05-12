@@ -71,8 +71,11 @@ const (
 
 // Message pour la demande d'accès à la section critique
 type MessageExclusionMutuelle struct {
-	Type        TypeSC
-	Estampille  Estampille
-	Horloge     int
-	Vectorielle HorlogeVectorielle
+	Type       TypeSC
+	Estampille Estampille
+}
+
+type MessageAccuse struct {
+	SiteCible  int
+	Estampille Estampille
 }
