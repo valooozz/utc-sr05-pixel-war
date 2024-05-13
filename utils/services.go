@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
@@ -173,6 +174,18 @@ func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 		return false
 	}
 
+	//var typeString string
+	//for i := 0; i < len(tabSC); i++ {
+	//	if tabSC[i].Type == Requete {
+	//		typeString = "Requete"
+	//	} else if tabSC[i].Type == Accuse {
+	//		typeString = "Accuse"
+	//	} else {
+	//		typeString = "Liberation"
+	//	}
+	//	DisplayError("C"+strconv.Itoa(site+1), "Question", "tabSC["+strconv.Itoa(i)+"].Type, tabSC["+strconv.Itoa(i)+"].Horloge = "+typeString+", "+strconv.Itoa(tabSC[i].Estampille.Horloge))
+	//}
+
 	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
 		if numOtherSite == site {
 			continue
@@ -203,6 +216,21 @@ func InitialisationNumSite(site string) int {
 	SiteString := site[StartNumberIndex:len(site)]
 	NumSite, _ := strconv.Atoi(SiteString)
 	return NumSite
+}
+
+func PlusVieilleRequeteAlive(site int, tabSC []MessageExclusionMutuelle) int {
+	sitePrioritaire := Estampille{Site: math.MaxInt, Horloge: math.MaxInt}
+	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
+		if numOtherSite == site || tabSC[numOtherSite].Type != Requete {
+			continue
+		}
+		if tabSC[numOtherSite].Estampille.Horloge < sitePrioritaire.Horloge {
+			sitePrioritaire = tabSC[numOtherSite].Estampille
+		} else if tabSC[numOtherSite].Estampille.Horloge == sitePrioritaire.Horloge && tabSC[numOtherSite].Estampille.Site < sitePrioritaire.Site {
+			sitePrioritaire = tabSC[numOtherSite].Estampille
+		}
+	}
+	return sitePrioritaire.Site
 }
 
 ////////////////////

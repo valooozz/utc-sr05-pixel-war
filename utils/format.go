@@ -72,15 +72,13 @@ func MessageToString(message Message) string {
 	} else {
 		c = "blanc"
 	}
-	return MessagePixelToString(message.Pixel) + sepM + sepP + "horloge" + sepP + strconv.Itoa(message.Horloge) +
-		sepM + sepP + "vectorielle" + sepP + HorlogeVectorielleToString(message.Vectorielle) + sepM + sepP + "nom" + sepP + message.Nom + sepM + sepP + "couleur" + sepP + c +
+	return MessagePixelToString(message.Pixel) + sepM + sepP + "vectorielle" + sepP + HorlogeVectorielleToString(message.Vectorielle) + sepM + sepP + "nom" + sepP + message.Nom + sepM + sepP + "couleur" + sepP + c +
 		sepM + sepP + "prepost" + sepP + strconv.FormatBool(message.Prepost)
 
 }
 
 func StringToMessage(str string) Message {
 	messagepixel := StringToMessagePixel(str)
-	h, _ := strconv.Atoi(TrouverValeur(str, "horloge"))
 	hv := TrouverValeur(str, "vectorielle")
 	n := TrouverValeur(str, "nom")
 	cV := TrouverValeur(str, "couleur")
@@ -91,7 +89,7 @@ func StringToMessage(str string) Message {
 		c = Blanc
 	}
 	prep, _ := strconv.ParseBool(TrouverValeur(str, "prepost"))
-	message := Message{messagepixel, h, StringToHorlogeVectorielle(hv), n, c, prep}
+	message := Message{messagepixel, StringToHorlogeVectorielle(hv), n, c, prep}
 	return message
 }
 

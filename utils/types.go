@@ -26,7 +26,6 @@ type MessageSauvegarde struct {
 
 type Message struct {
 	Pixel       MessagePixel
-	Horloge     int
 	Vectorielle HorlogeVectorielle
 	Nom         string
 	Couleur     Couleur
