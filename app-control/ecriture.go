@@ -40,7 +40,6 @@ func envoyerMessageBaseSauvegarde(messageSauvegarde utils.MessageSauvegarde) {
 // Exclusion mutuelle
 /////////////////////
 
-// Traite accusé, demande et libération, APP CONTROL -> APP CONTROL
 func envoyerMessageSCControle(msgSC utils.MessageExclusionMutuelle) {
 	msg := utils.MessageExclusionMutuelleToString(msgSC)
 	go envoyerMessage(msg)
@@ -48,11 +47,10 @@ func envoyerMessageSCControle(msgSC utils.MessageExclusionMutuelle) {
 
 func envoyerMessageAccuse(msgAcc utils.MessageAccuse) {
 	msg := utils.MessageAccuseToString(msgAcc)
-	fmt.Println(msg)
+	envoiSequentiel(msg)
 }
 
-// Communication APP BASE <-> APP CONTROLE
 func envoyerMessageSCBase(msgSC utils.TypeSC) {
 	msg := "A" + utils.MessageTypeSCToString(msgSC)
-	fmt.Println(msg)
+	envoiSequentiel(msg)
 }

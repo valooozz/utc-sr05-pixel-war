@@ -24,11 +24,10 @@ func lecture() {
 				traiterDebutSauvegarde()
 
 				// Traitement des messages de contrôle
-			} else if utils.TrouverValeur(rcvmsg, "horloge") != "" {
+			} else if utils.TrouverValeur(rcvmsg, "couleur") != "" {
 				if utils.TrouverValeur(rcvmsg, "prepost") == "true" {
 					traiterMessagePrepost(rcvmsg)
 				} else {
-					//L'affichage sur stderr se fait dans le traitement pour ce type de message
 					traiterMessageControle(rcvmsg)
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
@@ -69,10 +68,6 @@ func traiterMessageControle(rcvmsg string) {
 
 	// Extraction de la partie pixel
 	messagePixel := message.Pixel
-
-	// Recalage de l'horloge locale et mise à jour de sa valeur dans le message également
-	H = utils.Recaler(H, message.Horloge)
-	message.Horloge = H
 
 	// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
 	if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
@@ -118,7 +113,6 @@ func traiterMessagePrepost(rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 	etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
 
-	// Ça normalement on y arrive jamais, mais je le laisse au cas où ?
 	if nbEtatsAttendus == 0 {
 		utils.DisplayInfoSauvegarde(monNom, "Prepost", "Fin par prepost")
 		finSauvegarde()
@@ -152,7 +146,6 @@ func traiterMessagePixel(rcvmsg string) {
 	utils.DisplayInfo(monNom, "Pixel", "Message pixel reçu : "+rcvmsg)
 
 	messagePixel := utils.StringToMessagePixel(rcvmsg)
-	H++
 
 	horlogeVectorielle[monNom]++
 
@@ -160,7 +153,7 @@ func traiterMessagePixel(rcvmsg string) {
 	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = utils.CopyHorlogeVectorielle(horlogeVectorielle)
 
-	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
+	message := utils.Message{messagePixel, horlogeVectorielle, monNom, maCouleur, false}
 	envoyerMessageControle(message)
 }
 
@@ -226,11 +219,11 @@ func traiterMessageRequete(rcvmsg string) {
 		tabSC[demande.Estampille.Site] = demande
 		envoyerMessageAccuse(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
 		envoyerMessageSCControle(demande)
-	}
-
-	if utils.QuestionEntreeSC(Site, tabSC) {
-		utils.DisplayInfoSC(monNom, "Requete", "SC acceptée !")
+	} else if utils.QuestionEntreeSC(Site, tabSC) {
+		utils.DisplayInfoSC(monNom, "Requete", "SC acceptée par Requete !")
 		envoyerMessageSCBase(tabSC[Site].Type)
+	} else {
+		utils.DisplayInfoSC(monNom, "Requete", "SC refusée ! "+" La SC est occupée par C"+strconv.Itoa(utils.PlusVieilleRequeteAlive(Site, tabSC)+1)+" !")
 	}
 }
 
@@ -246,11 +239,12 @@ func traiterMessageLiberation(rcvmsg string) {
 	}
 
 	if utils.QuestionEntreeSC(Site, tabSC) {
-		utils.DisplayInfoSC(monNom, "Liberation", "SC acceptée !")
+		utils.DisplayInfoSC(monNom, "Liberation", "SC acceptée par Liberation !")
 		envoyerMessageSCBase(tabSC[Site].Type)
 	}
 }
 
+// APP CONTROL -> APP CONTROL
 func traiterMessageAccuse(rcvmsg string) {
 	message := utils.StringToMessageAccuse(rcvmsg)
 
@@ -261,5 +255,7 @@ func traiterMessageAccuse(rcvmsg string) {
 	}
 
 	//utils.DisplayInfoSC(monNom, "Accuse", "Message d'accusé pour moi")
-	tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
+	if tabSC[message.Estampille.Site].Type != utils.Requete {
+		tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
+	}
 }

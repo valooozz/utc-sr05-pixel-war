@@ -11,7 +11,11 @@ import (
 
 // Définition des variables
 var mutex = &sync.Mutex{}
-var H = 0
+var pNom = flag.String("n", "controle", "nom")
+var monNom string
+var Site int
+var N = 3
+
 var horlogeVectorielle = utils.HorlogeVectorielle{}
 var maCouleur = utils.Blanc
 var jeSuisInitiateur = false
@@ -19,14 +23,8 @@ var monEtatLocal utils.EtatLocal
 var etatGlobal utils.EtatGlobal
 var nbEtatsAttendus = 0
 
-var N = 3
-var tabSC = make([]utils.MessageExclusionMutuelle, N)
-
-var pNom = flag.String("n", "controle", "nom")
-var monNom string
-var Site int
-
 var HEM = 0
+var tabSC = make([]utils.MessageExclusionMutuelle, N)
 
 func main() {
 	flag.Parse()

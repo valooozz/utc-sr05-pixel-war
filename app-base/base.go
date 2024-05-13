@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"sync"
 	"time"
+	"utils"
 )
 
-func fiveSecondsSnapshot(n int) {
+func nSecondsSnapshot(n int) {
 	time.Sleep(time.Duration(n) * time.Second)
 	mutex.Lock()
 	fmt.Println("sauvegarde")
@@ -17,15 +18,22 @@ func fiveSecondsSnapshot(n int) {
 }
 
 // Le programme envoie périodiquement des messages sur stdout
-func sendperiodic() {
+func sendPeriodic() {
 	val, _ := strconv.Atoi(monNom[1:2])
-	for i := 0; i < 8; i++ {
+	for i := 0; i < 20; i++ {
 		demandeSC()
 		//updateMatriceFront()
+		if monNom[0:2] == "A1" {
+			time.Sleep(time.Duration(3) * time.Second)
+		}
+		if monNom[0:2] == "A2" {
+			time.Sleep(time.Duration(2) * time.Second)
+		}
 		envoyerPixel(i, i, 255, val, 0)
 		relacherSC()
-		time.Sleep(time.Duration(2) * time.Second)
+		time.Sleep(time.Duration(500) * time.Millisecond)
 	}
+	utils.DisplayWarning(monNom, "sendPeriodic", "SEND PERIODIC FINIT")
 }
 
 var mutex = &sync.Mutex{}
@@ -40,15 +48,17 @@ func main() {
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
 
-	if monNom[0:2] == "A1" {
-		go fiveSecondsSnapshot(5)
-	}
+	//TEST DE SAUVEGARDE : on envoie une sauvegarde au bout de n secondes
+	//if monNom[0:2] == "A1" {
+	//	go nSecondsSnapshot(20)
+	//}
 
+	//TEST EXCLUSION MUTUELLE : lancement de plusieurs sites dont 1 plus lent quand il a l'accès à la SC
 	//Création de 2 go routines qui s'exécutent en parallèle
 	//|| monNom[0:2] == "A2"
 	//|| monNom[0:2] == "A2" || monNom[0:2] == "A3"
-	if monNom[0:2] == "A1" {
-		go sendperiodic()
+	if monNom[0:2] == "A1" || monNom[0:2] == "A2" || monNom[0:2] == "A3" {
+		go sendPeriodic()
 	}
 	go lecture()
 	//On décide de bloquer le programme principal
