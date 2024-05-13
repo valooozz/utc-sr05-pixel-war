@@ -12,6 +12,10 @@ func envoyerMessage(message string) {
 	mutex.Unlock()
 }
 
+func envoiSequentiel(message string) {
+	fmt.Println(message)
+}
+
 // Envoi un type Message pour les applis de contrôle
 func envoyerMessageControle(message utils.Message) {
 	go envoyerMessage(utils.MessageToString(message))

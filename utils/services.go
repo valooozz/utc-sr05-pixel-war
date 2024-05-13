@@ -173,9 +173,6 @@ func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 		return false
 	}
 
-	for i := 0; i < len(tabSC); i++ {
-		DisplayInfo("site"+strconv.Itoa(site), "Question", "tabSC["+strconv.Itoa(i)+"]="+strconv.Itoa(int(tabSC[i].Type))+" | "+strconv.Itoa(tabSC[i].Estampille.Horloge))
-	}
 	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
 		if numOtherSite == site {
 			continue
@@ -195,7 +192,6 @@ func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 	}
 
 	if cpt == len(tabSC)-1 {
-		DisplayInfo("Coucou", "Question", "Accepté pour "+strconv.Itoa(site))
 		return true
 	}
 	return false

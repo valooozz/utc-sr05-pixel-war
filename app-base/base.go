@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"sync"
 	"time"
-	"utils"
 )
 
 func fiveSecondsSnapshot(n int) {
@@ -27,7 +26,6 @@ func sendperiodic() {
 		relacherSC()
 		time.Sleep(time.Duration(2) * time.Second)
 	}
-	utils.DisplayError(monNom, "sendperiodic", "J'AI FINIT MON PROGRAMME")
 }
 
 var mutex = &sync.Mutex{}
@@ -42,14 +40,14 @@ func main() {
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
 
-	//if monNom[0:2] == "A1" {
-	//	go fiveSecondsSnapshot(5)
-	//}
+	if monNom[0:2] == "A1" {
+		go fiveSecondsSnapshot(5)
+	}
 
 	//Création de 2 go routines qui s'exécutent en parallèle
 	//|| monNom[0:2] == "A2"
 	//|| monNom[0:2] == "A2" || monNom[0:2] == "A3"
-	if monNom[0:2] == "A1" || monNom[0:2] == "A2" || monNom[0:2] == "A3" {
+	if monNom[0:2] == "A1" {
 		go sendperiodic()
 	}
 	go lecture()

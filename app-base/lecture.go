@@ -44,7 +44,7 @@ func traiterMessagePixel(str string) {
 
 func traiterMessageSauvegarde(str string) {
 	messageSauvegarde := utils.StringToMessageSauvegarde(str)
-	utils.DisplayWarning(monNom, "lecture", "Message sauvegarde reçu : "+utils.MessageSauvegardeToString(messageSauvegarde))
+	utils.DisplayInfoSauvegarde(monNom, "lecture", "Message sauvegarde reçu : "+utils.MessageSauvegardeToString(messageSauvegarde))
 
 	//Traitement du message de sauvegarde : enregistrement dans un fichier et notification au frontend
 
@@ -79,7 +79,7 @@ func traiterMessageSauvegarde(str string) {
 		utils.DisplayError(monNom, "traiterMessageSauvegarde", "Erreur lors du vidage du tampon dans le fichier :"+err.Error())
 		return
 	}
-	utils.DisplayWarning(monNom, "traiterMessageSauvegarde", "Écriture dans le fichier terminée avec succès.")
+	utils.DisplayInfoSauvegarde(monNom, "traiterMessageSauvegarde", "Écriture dans le fichier terminée avec succès.")
 	fichier.Close()
 
 	//Notification au frontend
