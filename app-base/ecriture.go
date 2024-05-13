@@ -33,3 +33,7 @@ func relacherSC() {
 	msg := utils.MessageTypeSCToString(utils.Liberation)
 	envoyerMessage(msg)
 }
+
+func envoiSequentiel(message string) {
+	fmt.Println(message)
+}

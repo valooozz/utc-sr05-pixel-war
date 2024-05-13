@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"os"
 	"strconv"
 	"sync"
@@ -13,21 +12,24 @@ import (
 func nSecondsSnapshot(n int) {
 	time.Sleep(time.Duration(n) * time.Second)
 	mutex.Lock()
-	fmt.Println("sauvegarde")
+	envoiSequentiel("sauvegarde")
 	mutex.Unlock()
 }
 
 // Le programme envoie périodiquement des messages sur stdout
-func sendPeriodic() {
+func sendPeriodic(nbMessages int, slower bool) {
 	val, _ := strconv.Atoi(monNom[1:2])
-	for i := 0; i < 20; i++ {
+	for i := 0; i < nbMessages; i++ {
 		demandeSC()
-		//updateMatriceFront()
-		if monNom[0:2] == "A1" {
-			time.Sleep(time.Duration(3) * time.Second)
-		}
-		if monNom[0:2] == "A2" {
-			time.Sleep(time.Duration(2) * time.Second)
+		//Le slower permet créer une différence de vitesse entre les sites et accentue la dispute pour la section critique
+		//Ici que pour les 2 premiers sites
+		if slower {
+			if monNom[0:2] == "A1" {
+				time.Sleep(time.Duration(3) * time.Second)
+			}
+			if monNom[0:2] == "A2" {
+				time.Sleep(time.Duration(1) * time.Second)
+			}
 		}
 		envoyerPixel(i, i, 255, val, 0)
 		relacherSC()
@@ -43,26 +45,46 @@ var monNom string
 var cheminSauvegardes string
 var accesSC = false
 
+var pMode = flag.String("m", "a", "mode") //"t" ou "g" ou "a" pour terminal ou graphique ou "automatique
+var pAutoSave = flag.Int("s", -1, "sauvegarde automatique au bout de n secondes (>=0)")
+
 func main() {
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
+	modeDeLancement := *pMode
+	autoSave := *pAutoSave
 
-	//TEST DE SAUVEGARDE : on envoie une sauvegarde au bout de n secondes
-	//if monNom[0:2] == "A1" {
-	//	go nSecondsSnapshot(20)
-	//}
+	//Si l'option m == "g" on lance l'interface graphique, sinon le mode terminal ou automatique
+	if modeDeLancement == "g" {
+		//LANCEMENT DE L'INTERFACE GRAPHIQUE DANS UNE GO ROUTINE : car elle vient remplacer sendPeriodic
+		//C'est à l'interface d'utiliser demandeSC(), enoyerPixel() et relacherSC() pour faire ses transactions
+		//Ces fonctions se chargent de l'aspect mutex dans l'app de base, de l'aspect section critique également grace au booléen dédié
+		//[Lancement ici]
+	} else if modeDeLancement == "t" {
+		//LANCEMENT DU MODE TERMINAL
+		//On lance une sauvegarde au bout de n secondes
+		if autoSave >= 0 {
+			go nSecondsSnapshot(autoSave)
+		}
 
-	//TEST EXCLUSION MUTUELLE : lancement de plusieurs sites dont 1 plus lent quand il a l'accès à la SC
-	//Création de 2 go routines qui s'exécutent en parallèle
-	//|| monNom[0:2] == "A2"
-	//|| monNom[0:2] == "A2" || monNom[0:2] == "A3"
-	if monNom[0:2] == "A1" || monNom[0:2] == "A2" || monNom[0:2] == "A3" {
-		go sendPeriodic()
+		//On lance une fonction d'envoi périodique sur la diagonale (20 messages)
+		go sendPeriodic(20, false)
+	} else if modeDeLancement == "a" {
+		//LANCEMENT DU MODE AUTOMATIQUE
+		//On lance le snapshot sur A1 au bout de 7 secondes (A1 doit être en mode automatique biensûr)
+		if monNom[0:2] == "A1" {
+			go nSecondsSnapshot(7)
+		}
+
+		//On lance un envoi automatique périodique sur la diagonale sur les 2 premiers/seuls sites (ils doivent exister sous ce nom biensûr)
+		if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
+			go sendPeriodic(20, true)
+		}
 	}
 	go lecture()
 	//On décide de bloquer le programme principal
 	for {
 		time.Sleep(time.Duration(60) * time.Second)
-	} // Pour attendre la fin des goroutines...
+	}
 }
