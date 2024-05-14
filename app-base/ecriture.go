@@ -13,11 +13,6 @@ func envoyerMessage(message string) {
 	mutex.Unlock()
 }
 
-func envoyerPixel(positionX int, positionY int, rouge int, vert int, bleu int) {
-	messagePixel := utils.MessagePixel{positionX, positionY, rouge, vert, bleu}
-	envoyerMessage(utils.MessagePixelToString(messagePixel))
-}
-
 // Communication APP BASE -> APP CONTROLE
 func demandeSC() {
 	msg := utils.MessageTypeSCToString(utils.Requete)

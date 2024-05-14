@@ -2,6 +2,9 @@ package main
 
 import (
 	"flag"
+	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
+	"image/color"
 	"os"
 	"strconv"
 	"sync"
@@ -38,6 +41,27 @@ func sendPeriodic(nbMessages int, slower bool) {
 	utils.DisplayWarning(monNom, "sendPeriodic", "SEND PERIODIC FINIT")
 }
 
+func attenteDroit(n int) {
+	time.Sleep(time.Duration(n) * time.Second)
+	jePeux = true
+}
+
+func clicGaucheMatrice(slower bool, game *Game, positionX int, positionY int, rouge int, vert int, bleu int) {
+	if jePeux {
+		demandeSC()
+		//Le slower permet créer une différence de vitesse entre les sites et accentue la dispute pour la section critique
+		//Ici que pour les 2 premiers sites
+		utils.DisplayError(monNom, "UpdateMatrix", "Avant update locale")
+		game.UpdateMatrix(positionX, positionY, uint8(rouge), uint8(vert), uint8(bleu))
+		utils.DisplayError(monNom, "UpdateMatrix", "Après update locale")
+		envoyerPixel(positionX, positionY, rouge, vert, bleu)
+		relacherSC()
+		jePeux = false
+		go attenteDroit(10)
+	}
+}
+
+var jePeux = true
 var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "base", "nom")
 var pPath = flag.String("p", "./sauvegardes", "path")
@@ -54,13 +78,39 @@ func main() {
 	cheminSauvegardes = *pPath
 	modeDeLancement := *pMode
 	autoSave := *pAutoSave
+	var game *Game
 
 	//Si l'option m == "g" on lance l'interface graphique, sinon le mode terminal ou automatique
 	if modeDeLancement == "g" {
 		//LANCEMENT DE L'INTERFACE GRAPHIQUE DANS UNE GO ROUTINE : car elle vient remplacer sendPeriodic
 		//C'est à l'interface d'utiliser demandeSC(), envoyerPixel() et relacherSC() pour faire ses transactions
 		//Ces fonctions se chargent de l'aspect mutex dans l'app de base, de l'aspect section critique également grace au booléen dédié
-		//[Lancement ici]
+		matrix := make([][]Pixel, 100)
+		for y := 0; y < 100; y++ {
+			matrix[y] = make([]Pixel, 100)
+			for x := 0; x < 100; x++ {
+				matrix[y][x] = Pixel{
+					R: 255,
+					G: 255,
+					B: 255,
+				}
+			}
+		}
+		colorWheel, _, err := ebitenutil.NewImageFromFile("app-base/color_wheel.png")
+		if err != nil {
+			panic(err)
+		}
+
+		game = &Game{
+			Matrix:        matrix,
+			ColorWheel:    colorWheel,
+			SelectedColor: color.RGBA{R: 0, G: 0, B: 0, A: 0xFF},
+		}
+		go lecture(game)
+		err = ebiten.RunGame(game)
+		if err != nil {
+			return
+		}
 	} else if modeDeLancement == "t" {
 		//LANCEMENT DU MODE TERMINAL
 		//On lance une sauvegarde au bout de n secondes
@@ -70,6 +120,12 @@ func main() {
 
 		//On lance une fonction d'envoi périodique sur la diagonale (20 messages)
 		go sendPeriodic(20, false)
+		game = &Game{
+			Matrix:        nil,
+			ColorWheel:    nil,
+			SelectedColor: color.RGBA{},
+		}
+		go lecture(game)
 	} else if modeDeLancement == "a" {
 		//LANCEMENT DU MODE AUTOMATIQUE
 		//On lance le snapshot sur A1 au bout de 7 secondes (A1 doit être en mode automatique biensûr)
@@ -81,8 +137,14 @@ func main() {
 		if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
 			go sendPeriodic(20, true)
 		}
+		game = &Game{
+			Matrix:        nil,
+			ColorWheel:    nil,
+			SelectedColor: color.RGBA{},
+		}
+		go lecture(game)
 	}
-	go lecture()
+
 	//On décide de bloquer le programme principal
 	for {
 		time.Sleep(time.Duration(60) * time.Second)
