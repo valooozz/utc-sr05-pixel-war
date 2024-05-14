@@ -11,7 +11,6 @@ import (
 
 // Quand le programme n'est pas en train d'écrire, il lit
 func lecture(game *Game) {
-	utils.DisplayError(monNom, "lecture", "Lecture ici lancée")
 	var rcvmsg string
 
 	for {
@@ -24,7 +23,7 @@ func lecture(game *Game) {
 		mutex.Lock()
 		if rcvmsg[0] == uint8('A') { // On traite le message s'il commence par un 'A'
 			//Traitement messages sauvegarde quand la sauvegarde a été terminée
-			if utils.TrouverValeur(rcvmsg[1:], "listSauvegarde") != "" {
+			if utils.TrouverValeur(rcvmsg[1:], "vectorielle") != "" {
 				traiterMessageSauvegarde(rcvmsg[1:])
 			} else if utils.TrouverValeur(rcvmsg[1:], "positionX") != "" {
 				traiterMessagePixel(rcvmsg[1:], game)

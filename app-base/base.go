@@ -51,9 +51,7 @@ func clicGaucheMatrice(slower bool, game *Game, positionX int, positionY int, ro
 		demandeSC()
 		//Le slower permet créer une différence de vitesse entre les sites et accentue la dispute pour la section critique
 		//Ici que pour les 2 premiers sites
-		utils.DisplayError(monNom, "UpdateMatrix", "Avant update locale")
 		game.UpdateMatrix(positionX, positionY, uint8(rouge), uint8(vert), uint8(bleu))
-		utils.DisplayError(monNom, "UpdateMatrix", "Après update locale")
 		envoyerPixel(positionX, positionY, rouge, vert, bleu)
 		relacherSC()
 		jePeux = false
@@ -61,7 +59,17 @@ func clicGaucheMatrice(slower bool, game *Game, positionX int, positionY int, ro
 	}
 }
 
+func clicGaucheSaveLogo() {
+	mutex.Lock()
+	envoiSequentiel("sauvegarde")
+	mutex.Unlock()
+}
+
+// Variable globales d'interface
 var jePeux = true
+var saveAccess = true
+
+// Variables globales de répartition
 var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "base", "nom")
 var pPath = flag.String("p", "./sauvegardes", "path")
@@ -69,6 +77,7 @@ var monNom string
 var cheminSauvegardes string
 var accesSC = false
 
+// Variables globales d'utilisation
 var pMode = flag.String("m", "a", "mode") //"t" ou "g" ou "a" pour terminal ou graphique ou "automatique
 var pAutoSave = flag.Int("s", -1, "sauvegarde automatique au bout de n secondes (>=0)")
 
@@ -82,69 +91,89 @@ func main() {
 
 	//Si l'option m == "g" on lance l'interface graphique, sinon le mode terminal ou automatique
 	if modeDeLancement == "g" {
-		//LANCEMENT DE L'INTERFACE GRAPHIQUE DANS UNE GO ROUTINE : car elle vient remplacer sendPeriodic
-		//C'est à l'interface d'utiliser demandeSC(), envoyerPixel() et relacherSC() pour faire ses transactions
-		//Ces fonctions se chargent de l'aspect mutex dans l'app de base, de l'aspect section critique également grace au booléen dédié
-		matrix := make([][]Pixel, 100)
-		for y := 0; y < 100; y++ {
-			matrix[y] = make([]Pixel, 100)
-			for x := 0; x < 100; x++ {
-				matrix[y][x] = Pixel{
-					R: 255,
-					G: 255,
-					B: 255,
-				}
+		lancementModeGraphique(game)
+	} else if modeDeLancement == "t" {
+		lancementModeTerminal(game, autoSave)
+	} else if modeDeLancement == "a" {
+		lancementModeAutomatique(game)
+	}
+}
+
+func lancementModeGraphique(game *Game) {
+	matrix := make([][]Pixel, 100)
+	for y := 0; y < 100; y++ {
+		matrix[y] = make([]Pixel, 100)
+		for x := 0; x < 100; x++ {
+			matrix[y][x] = Pixel{
+				R: 255,
+				G: 255,
+				B: 255,
 			}
 		}
-		colorWheel, _, err := ebitenutil.NewImageFromFile("app-base/color_wheel.png")
-		if err != nil {
-			panic(err)
-		}
-
-		game = &Game{
-			Matrix:        matrix,
-			ColorWheel:    colorWheel,
-			SelectedColor: color.RGBA{R: 0, G: 0, B: 0, A: 0xFF},
-		}
-		go lecture(game)
-		err = ebiten.RunGame(game)
-		if err != nil {
-			return
-		}
-	} else if modeDeLancement == "t" {
-		//LANCEMENT DU MODE TERMINAL
-		//On lance une sauvegarde au bout de n secondes
-		if autoSave >= 0 {
-			go nSecondsSnapshot(autoSave)
-		}
-
-		//On lance une fonction d'envoi périodique sur la diagonale (20 messages)
-		go sendPeriodic(20, false)
-		game = &Game{
-			Matrix:        nil,
-			ColorWheel:    nil,
-			SelectedColor: color.RGBA{},
-		}
-		go lecture(game)
-	} else if modeDeLancement == "a" {
-		//LANCEMENT DU MODE AUTOMATIQUE
-		//On lance le snapshot sur A1 au bout de 7 secondes (A1 doit être en mode automatique biensûr)
-		if monNom[0:2] == "A1" {
-			go nSecondsSnapshot(7)
-		}
-
-		//On lance un envoi automatique périodique sur la diagonale sur les 2 premiers/seuls sites (ils doivent exister sous ce nom biensûr)
-		if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
-			go sendPeriodic(20, true)
-		}
-		game = &Game{
-			Matrix:        nil,
-			ColorWheel:    nil,
-			SelectedColor: color.RGBA{},
-		}
-		go lecture(game)
 	}
 
+	//IMAGE
+	colorWheel, _, err := ebitenutil.NewImageFromFile("app-base/color_wheel.png")
+	if err != nil {
+		panic(err)
+	}
+
+	//BOUTTON SAUVEGARDE
+	saveLogo, _, err := ebitenutil.NewImageFromFile("app-base/saveLogo.png")
+	if err != nil {
+		panic(err)
+	}
+
+	game = &Game{
+		Matrix:        matrix,
+		ColorWheel:    colorWheel,
+		SaveLogo:      saveLogo,
+		SelectedColor: color.RGBA{R: 0, G: 0, B: 0, A: 0xFF},
+	}
+	go lecture(game)
+	err = ebiten.RunGame(game)
+	if err != nil {
+		return
+	}
+}
+
+func lancementModeTerminal(game *Game, autoSave int) {
+	//On lance une sauvegarde au bout de n secondes
+	if autoSave >= 0 {
+		go nSecondsSnapshot(autoSave)
+	}
+
+	//On lance une fonction d'envoi périodique sur la diagonale (20 messages)
+	go sendPeriodic(20, false)
+	game = &Game{
+		Matrix:        nil,
+		ColorWheel:    nil,
+		SelectedColor: color.RGBA{},
+	}
+
+	go lecture(game)
+	//On décide de bloquer le programme principal
+	for {
+		time.Sleep(time.Duration(60) * time.Second)
+	}
+}
+
+func lancementModeAutomatique(game *Game) {
+	//On lance le snapshot sur A1 au bout de 7 secondes (A1 doit être en mode automatique biensûr)
+	if monNom[0:2] == "A1" {
+		go nSecondsSnapshot(7)
+	}
+
+	//On lance un envoi automatique périodique sur la diagonale sur les 2 premiers/seuls sites (ils doivent exister sous ce nom biensûr)
+	if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
+		go sendPeriodic(20, true)
+	}
+	game = &Game{
+		Matrix:        nil,
+		ColorWheel:    nil,
+		SelectedColor: color.RGBA{},
+	}
+	go lecture(game)
 	//On décide de bloquer le programme principal
 	for {
 		time.Sleep(time.Duration(60) * time.Second)

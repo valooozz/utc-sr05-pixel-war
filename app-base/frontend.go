@@ -27,6 +27,7 @@ func createImageFromMatrix(matrix [][]Pixel) *ebiten.Image {
 type Game struct {
 	Matrix        [][]Pixel
 	ColorWheel    *ebiten.Image
+	SaveLogo      *ebiten.Image
 	SelectedColor color.RGBA
 }
 
@@ -47,7 +48,12 @@ func (g *Game) Update() error {
 	screenWidth, screenHeight := ebiten.WindowSize()
 	if ebiten.IsMouseButtonPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
-		if x >= 0 && x < screenWidth && y >= 0 && y < screenHeight {
+		if x >= 80 && x <= 100 && y >= 80 && y <= 100 {
+			if saveAccess {
+				clicGaucheSaveLogo()
+				saveAccess = false
+			}
+		} else if x >= 0 && x < screenWidth && y >= 0 && y < screenHeight {
 			clicGaucheMatrice(false, g, y, x, int(g.SelectedColor.R), int(g.SelectedColor.G), int(g.SelectedColor.B))
 			// Les coordonnées de la souris ne sont pas comme est ordonnée la matrice, donc inversion de x et de y
 		}
@@ -68,7 +74,7 @@ func (g Game) Draw(screen *ebiten.Image) {
 	// Draw the main image
 	screen.Fill(color.White)
 	op := &ebiten.DrawImageOptions{}
-	// Adjust position based on desired layout (explained later)
+	// Adjust position based on desired layout
 	op.GeoM.Translate(0, 0)
 
 	img := createImageFromMatrix(g.Matrix)
@@ -79,6 +85,12 @@ func (g Game) Draw(screen *ebiten.Image) {
 	colorWheelOp.GeoM.Translate(100, 0)
 	colorWheelOp.GeoM.Scale(0.5, 0.5)
 	screen.DrawImage(g.ColorWheel, colorWheelOp)
+
+	//Draw the save button
+	saveLogoOp := &ebiten.DrawImageOptions{}
+	saveLogoOp.GeoM.Translate(280, 280)
+	saveLogoOp.GeoM.Scale(0.3, 0.3)
+	screen.DrawImage(g.SaveLogo, saveLogoOp)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
