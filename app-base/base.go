@@ -58,7 +58,7 @@ func main() {
 	//Si l'option m == "g" on lance l'interface graphique, sinon le mode terminal ou automatique
 	if modeDeLancement == "g" {
 		//LANCEMENT DE L'INTERFACE GRAPHIQUE DANS UNE GO ROUTINE : car elle vient remplacer sendPeriodic
-		//C'est à l'interface d'utiliser demandeSC(), enoyerPixel() et relacherSC() pour faire ses transactions
+		//C'est à l'interface d'utiliser demandeSC(), envoyerPixel() et relacherSC() pour faire ses transactions
 		//Ces fonctions se chargent de l'aspect mutex dans l'app de base, de l'aspect section critique également grace au booléen dédié
 		//[Lancement ici]
 	} else if modeDeLancement == "t" {
