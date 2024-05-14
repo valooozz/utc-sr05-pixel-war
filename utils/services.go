@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-//Définition des fonctions de service et de formattage des données
 
+// Trouve une valeur dans un message string transmis sur l'anneau
 func TrouverValeur(message string, cle string) string {
 	if len(message) < 4 {
 		return ""
@@ -24,6 +24,8 @@ func TrouverValeur(message string, cle string) string {
 	return ""
 }
 
+
+// Recale une horloge entière
 func Recaler(x, y int) int {
 	if x < y {
 		return y + 1
@@ -31,6 +33,7 @@ func Recaler(x, y int) int {
 	return x + 1
 }
 
+// Met à jour l'horloge vectorielle locale avec celle reçue
 func MajHorlogeVectorielle(monNom string, locale, recue HorlogeVectorielle) HorlogeVectorielle {
 
 	// On met à jour les champs présents dans l'horloge locale
@@ -55,6 +58,7 @@ func MajHorlogeVectorielle(monNom string, locale, recue HorlogeVectorielle) Horl
 	return locale
 }
 
+// Retourne une copie d'une horloge vectorielle (utile à cause du fonctionnement des slices en go)
 func CopyHorlogeVectorielle(horlogeVectorielle HorlogeVectorielle) HorlogeVectorielle {
 
 	var copie = HorlogeVectorielle{}
@@ -66,6 +70,7 @@ func CopyHorlogeVectorielle(horlogeVectorielle HorlogeVectorielle) HorlogeVector
 	return copie
 }
 
+// Retourne Vrai si la coupure présente dans l'état global est cohérente, faux sinon
 func CoupureEstCoherente(etatGlobal EtatGlobal) (bool, map[string]int) {
 	isProcessed := make(map[string]bool)
 	mapMax := make(map[string]int)
@@ -96,6 +101,7 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) (bool, map[string]int) {
 	return true, mapMax
 }
 
+// Met à jour l'état local en ajoutant ou remplaçant un MessagePixel
 func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
 	var found = false
 	for i, pixel := range etatLocal.ListMessagePixel {
@@ -115,6 +121,7 @@ func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
 	return etatLocal
 }
 
+// Retourne une copie de l'état local entré (utile à cause du fonctionnement des slices en go)
 func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
 	var copie = EtatLocal{
 		NomSite:          etatLocal.NomSite,
@@ -129,6 +136,7 @@ func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
 	return copie
 }
 
+// Retourne une grille de pixels unique à partir d'un état global
 func ReconstituerCarte(etatGlobal EtatGlobal) []MessagePixel {
 	var carte = etatGlobal.ListEtatLocal[0].ListMessagePixel
 	var pixel MessagePixel
@@ -141,50 +149,17 @@ func ReconstituerCarte(etatGlobal EtatGlobal) []MessagePixel {
 	return carte
 }
 
-func ReconstituerCarteOld(etatGlobal EtatGlobal) []MessagePixel {
-	var carte = etatGlobal.ListEtatLocal[0].ListMessagePixel
-
-	for _, etatLocal := range etatGlobal.ListEtatLocal[1:] {
-		for i, pixel := range etatLocal.ListMessagePixel {
-			if i-1 > len(carte) {
-				carte = append(carte, pixel)
-				continue
-			}
-			if memePosition(carte[i], pixel) && !memeCouleur(carte[i], pixel) {
-				found, prepost := getPrepostOnSamePosition(pixel, etatGlobal.ListMessagePrepost)
-				if found {
-					carte[i] = prepost
-				}
-			}
-		}
-	}
-
-	return carte
-}
-
 /////////////////////
 // Exclusion mutuelle
 /////////////////////
 
-// Tester et valider
+
 func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 	cpt := 0
 
 	if tabSC[site].Type != Requete {
 		return false
 	}
-
-	//var typeString string
-	//for i := 0; i < len(tabSC); i++ {
-	//	if tabSC[i].Type == Requete {
-	//		typeString = "Requete"
-	//	} else if tabSC[i].Type == Accuse {
-	//		typeString = "Accuse"
-	//	} else {
-	//		typeString = "Liberation"
-	//	}
-	//	DisplayError("C"+strconv.Itoa(site+1), "Question", "tabSC["+strconv.Itoa(i)+"].Type, tabSC["+strconv.Itoa(i)+"].Horloge = "+typeString+", "+strconv.Itoa(tabSC[i].Estampille.Horloge))
-	//}
 
 	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
 		if numOtherSite == site {
@@ -210,7 +185,7 @@ func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 	return false
 }
 
-// Tester et valider
+
 func InitialisationNumSite(site string) int {
 	StartNumberIndex := 1
 	SiteString := site[StartNumberIndex:len(site)]
