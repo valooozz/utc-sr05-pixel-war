@@ -27,19 +27,26 @@ var HEM = 0
 var tabSC = make([]utils.MessageExclusionMutuelle, N)
 
 func main() {
+
+	// On initialise le nom et le numéro du site
 	flag.Parse()
 	Site = utils.InitialisationNumSite(*pNom) - 1
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
+	// On initiliase le tableau de la file d'attente répartie avec Liberation partout
 	for i := 0; i < len(tabSC); i++ {
 		tabSC[i].Type = utils.Liberation
 		tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
 	}
 
+	// On initialise l'horloge vectorielle avec le site local pour l'instant
 	horlogeVectorielle[monNom] = 0
+
+	// On initialise l'état local
 	monEtatLocal.NomSite = monNom
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
+	// On lance une go-routine pour écouter les messages entrants sur l'entrée standard
 	go lecture()
 	for {
 		time.Sleep(time.Duration(60) * time.Second)

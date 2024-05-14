@@ -16,6 +16,7 @@ func lecture() {
 			continue
 		}
 		mutex.Lock()
+
 		// On traite uniquement les messages qui ne commencent pas par un 'A'
 		if rcvmsg[0] != uint8('A') {
 
@@ -170,6 +171,8 @@ func traiterDebutSauvegarde() {
 
 func finSauvegarde() {
 	utils.DisplayInfoSauvegarde(monNom, "Fin", "Sauvegarde complétée")
+
+	// On affiche l'état global (liste des états locaux et liste des messages préposts)
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
 		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.EtatLocalToString(etatLocal))
 	}
@@ -177,6 +180,7 @@ func finSauvegarde() {
 		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.MessageToString(mp))
 	}
 
+	// On calcule si la coupure et cohérente et on récupère sa date (max de la vectorielle de chaque site)
 	coherente, maxVectorielle := utils.CoupureEstCoherente(etatGlobal)
 
 	if coherente {
@@ -196,6 +200,7 @@ func finSauvegarde() {
 // APP BASE -> APP CONTROLE
 func traiterMessageSC(rcvmsg string) {
 	demande := utils.StringToMessageTypeSC(rcvmsg)
+	
 	var typeToString string
 	if demande == utils.Requete {
 		typeToString = "REQUÊTE d'accès à la section critique"
@@ -203,9 +208,13 @@ func traiterMessageSC(rcvmsg string) {
 		typeToString = "LIBÉRATION de l'accès à la section critique"
 	}
 	utils.DisplayInfoSC(monNom, "SC", "A"+strconv.Itoa(Site+1)+" envoie : "+typeToString)
+
+	// On met à jour l'horloge locale et le tableau de la file d'attente
 	HEM++
 	message := utils.MessageExclusionMutuelle{Type: demande, Estampille: utils.Estampille{Site: Site, Horloge: HEM}}
 	tabSC[Site] = message
+
+	// On transmet la Requete ou la Liberation sur l'anneau
 	envoyerMessageSCControle(message)
 }
 
@@ -213,12 +222,18 @@ func traiterMessageSC(rcvmsg string) {
 func traiterMessageRequete(rcvmsg string) {
 	demande := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
+	// Si le message ne vient pas de nous
 	if demande.Estampille.Site != Site {
-		//utils.DisplayInfoSC(monNom, "Requete", "Message de requete reçu et forwardé : "+rcvmsg)
+
+		// On met à jour l'horloge et le tableau de la file d'attente
 		HEM = utils.Recaler(demande.Estampille.Horloge, HEM)
 		tabSC[demande.Estampille.Site] = demande
+
+		// On envoie un Accuse à l'émetteur de la Requete et on transmet celle-ci sur l'anneau
 		envoyerMessageAccuse(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
 		envoyerMessageSCControle(demande)
+
+		// On regarde si on peut accepter une SC chez nous
 	} else if utils.QuestionEntreeSC(Site, tabSC) {
 		utils.DisplayInfoSC(monNom, "Requete", "SC acceptée par Requete !")
 		envoyerMessageSCBase(tabSC[Site].Type)
@@ -231,13 +246,18 @@ func traiterMessageRequete(rcvmsg string) {
 func traiterMessageLiberation(rcvmsg string) {
 	liberation := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
+	// Si le message ne vient pas de nous
 	if liberation.Estampille.Site != Site {
-		//utils.DisplayInfoSC(monNom, "Liberation", "Message de liberation reçu et forwardé : "+rcvmsg)
+		
+		// On met à jour l'horloge et le tableau de la file d'attente
 		HEM = utils.Recaler(liberation.Estampille.Horloge, HEM)
 		tabSC[liberation.Estampille.Site] = liberation
+
+		// On transmet le message sur l'anneau
 		envoyerMessageSCControle(liberation)
 	}
 
+	// On regarde si on peut accepter une SC chez nous
 	if utils.QuestionEntreeSC(Site, tabSC) {
 		utils.DisplayInfoSC(monNom, "Liberation", "SC acceptée par Liberation !")
 		envoyerMessageSCBase(tabSC[Site].Type)
@@ -248,13 +268,13 @@ func traiterMessageLiberation(rcvmsg string) {
 func traiterMessageAccuse(rcvmsg string) {
 	message := utils.StringToMessageAccuse(rcvmsg)
 
+	// Si l'Accuse n'est pas pour nous, on le transmet et on quitte la fonction
 	if Site != message.SiteCible {
-		//utils.DisplayInfoSC(monNom, "Accuse", "Message d'accusé reçu et forwardé : "+rcvmsg)
 		envoiSequentiel(rcvmsg)
 		return
 	}
 
-	//utils.DisplayInfoSC(monNom, "Accuse", "Message d'accusé pour moi")
+	// Si le site qui envoie l'Accuse ne fait pas de requête, on passe son état à Accuse dans le tableau de la file d'attente
 	if tabSC[message.Estampille.Site].Type != utils.Requete {
 		tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
 	}
