@@ -46,7 +46,7 @@ func attenteDroit(n int) {
 	jePeux = true
 }
 
-func clicGaucheMatrice(slower bool, game *Game, positionX int, positionY int, rouge int, vert int, bleu int) {
+func clicGaucheMatrice(game *Game, positionX int, positionY int, rouge int, vert int, bleu int) {
 	if jePeux {
 		demandeSC()
 		//Le slower permet créer une différence de vitesse entre les sites et accentue la dispute pour la section critique
