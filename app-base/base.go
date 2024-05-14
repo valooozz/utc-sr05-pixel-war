@@ -78,23 +78,19 @@ var cheminSauvegardes string
 var accesSC = false
 
 // Variables globales d'utilisation
-var pMode = flag.String("m", "a", "mode") //"t" ou "g" ou "a" pour terminal ou graphique ou "automatique
-var pAutoSave = flag.Int("s", -1, "sauvegarde automatique au bout de n secondes (>=0)")
+var pMode = flag.String("m", "a", "mode") //"g" ou "a" pour graphique ou "automatique
 
 func main() {
 	flag.Parse()
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
 	modeDeLancement := *pMode
-	autoSave := *pAutoSave
 	var game *Game
 
 	//Si l'option m == "g" on lance l'interface graphique, sinon le mode terminal ou automatique
 	if modeDeLancement == "g" {
 		lancementModeGraphique(game)
-	} else if modeDeLancement == "t" {
-		lancementModeTerminal(game, autoSave)
-	} else if modeDeLancement == "a" {
+	} else {
 		lancementModeAutomatique(game)
 	}
 }
@@ -137,31 +133,10 @@ func lancementModeGraphique(game *Game) {
 	}
 }
 
-func lancementModeTerminal(game *Game, autoSave int) {
-	//On lance une sauvegarde au bout de n secondes
-	if autoSave >= 0 {
-		go nSecondsSnapshot(autoSave)
-	}
-
-	//On lance une fonction d'envoi périodique sur la diagonale (20 messages)
-	go sendPeriodic(20, false)
-	game = &Game{
-		Matrix:        nil,
-		ColorWheel:    nil,
-		SelectedColor: color.RGBA{},
-	}
-
-	go lecture(game)
-	//On décide de bloquer le programme principal
-	for {
-		time.Sleep(time.Duration(60) * time.Second)
-	}
-}
-
 func lancementModeAutomatique(game *Game) {
 	//On lance le snapshot sur A1 au bout de 7 secondes (A1 doit être en mode automatique biensûr)
 	if monNom[0:2] == "A1" {
-		go nSecondsSnapshot(7)
+		go nSecondsSnapshot(10)
 	}
 
 	//On lance un envoi automatique périodique sur la diagonale sur les 2 premiers/seuls sites (ils doivent exister sous ce nom biensûr)
