@@ -12,9 +12,9 @@ import (
 // Définition des variables
 var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "controle", "nom")
-var monNom string
-var Site int
-var N = 3
+var monNom string // Nom du site (option -n + pid)
+var Site int      // Numéro du site
+var N = 3         // Nombre de sites dans le réseau
 
 var horlogeVectorielle = utils.HorlogeVectorielle{}
 var maCouleur = utils.Blanc
@@ -23,8 +23,8 @@ var monEtatLocal utils.EtatLocal
 var etatGlobal utils.EtatGlobal
 var nbEtatsAttendus = 0
 
-var HEM = 0
-var tabSC = make([]utils.MessageExclusionMutuelle, N)
+var HEM = 0                                           // Horloge Exclusion Mutuelle
+var tabSC = make([]utils.MessageExclusionMutuelle, N) // Tableau utilisé par la file d'attente répartie afin de gérer les sections critiques
 
 func main() {
 
@@ -33,7 +33,7 @@ func main() {
 	Site = utils.InitialisationNumSite(*pNom) - 1
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
-	// On initiliase le tableau de la file d'attente répartie avec Liberation partout
+	// On initialise le tableau de la file d'attente répartie avec Liberation partout
 	for i := 0; i < len(tabSC); i++ {
 		tabSC[i].Type = utils.Liberation
 		tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}

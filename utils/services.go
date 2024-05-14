@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-
 // Trouve une valeur dans un message string transmis sur l'anneau
 func TrouverValeur(message string, cle string) string {
 	if len(message) < 4 {
@@ -23,7 +22,6 @@ func TrouverValeur(message string, cle string) string {
 	}
 	return ""
 }
-
 
 // Recale une horloge entière
 func Recaler(x, y int) int {
@@ -153,7 +151,6 @@ func ReconstituerCarte(etatGlobal EtatGlobal) []MessagePixel {
 // Exclusion mutuelle
 /////////////////////
 
-
 func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 	cpt := 0
 
@@ -185,7 +182,6 @@ func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
 	return false
 }
 
-
 func InitialisationNumSite(site string) int {
 	StartNumberIndex := 1
 	SiteString := site[StartNumberIndex:len(site)]
@@ -212,6 +208,7 @@ func PlusVieilleRequeteAlive(site int, tabSC []MessageExclusionMutuelle) int {
 // FONCTIONS PRIVEES
 ////////////////////
 
+// Retourne Vrai si les deux pixels entrés sont à la même position, Faux sinon
 func memePosition(pixel1, pixel2 MessagePixel) bool {
 	if pixel1.PositionX == pixel2.PositionX && pixel1.PositionY == pixel2.PositionY {
 		return true
@@ -219,6 +216,7 @@ func memePosition(pixel1, pixel2 MessagePixel) bool {
 	return false
 }
 
+// Retourne Vrai si les deux pixels entrés sont de la même couleur, Faux sinon
 func memeCouleur(pixel1, pixel2 MessagePixel) bool {
 	if pixel1.Rouge == pixel2.Rouge && pixel1.Vert == pixel2.Vert && pixel1.Bleu == pixel2.Bleu {
 		return true
@@ -226,6 +224,7 @@ func memeCouleur(pixel1, pixel2 MessagePixel) bool {
 	return false
 }
 
+// Met à jour une liste de pixels en remplaçant le pixel déjà présent à la même position, ou en l'ajoutant si la position n'y est pas
 func replaceOrAddPixel(carte []MessagePixel, newPixel MessagePixel) []MessagePixel {
 	var found = false
 
@@ -241,21 +240,4 @@ func replaceOrAddPixel(carte []MessagePixel, newPixel MessagePixel) []MessagePix
 	}
 
 	return carte
-}
-
-func getPrepostOnSamePosition(pixelReference MessagePixel, listPrepost []Message) (bool, MessagePixel) {
-	var pixel MessagePixel
-	var pixelFound MessagePixel
-	var found = false
-
-	for _, message := range listPrepost {
-		pixel = message.Pixel
-		if memePosition(pixel, pixelReference) {
-			pixelFound = pixel
-			found = true
-			break
-		}
-	}
-
-	return found, pixelFound
 }

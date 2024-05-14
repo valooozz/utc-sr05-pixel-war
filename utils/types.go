@@ -1,8 +1,8 @@
 package utils
 
 // Définition des types
-const sepM = "/" //séparateur dans les messages
-const sepP = "=" //séparateur ddans les paires clé/valeur
+const sepM = "/" // séparateur dans les messages
+const sepP = "=" // séparateur dans les paires clé/valeur
 
 type Couleur bool
 
@@ -50,13 +50,12 @@ type MessageEtat struct {
 type HorlogeVectorielle map[string]int
 
 /////////////////////
-// Exclusion mutuelle
+//Exclusion mutuelle
 /////////////////////
 
-// Estampille
 type Estampille struct {
-	Site    int
-	Horloge int
+	Site    int // numéro du site
+	Horloge int // horloge entière
 }
 
 // Type de demande d'accès à la section critique (accès, libération)

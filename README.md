@@ -2,20 +2,30 @@
 
 ## Introduction
 
+<img src="pixel-war.png" alt="pixel-war-interface" width="400" height="200">
+
 ### Concept
 
 Chaque joueur a devant lui une grille de pixels partagé par tous les joueurs. 
 Il peut placer des couleurs sur cette grille. 
 Pour cela, il choisit une couleur sur une roue de couleurs, puis l'applique sur un pixel en cliquant dessus.
-Après avoir colorié un pixel, il doit attendre cinq secondes avant de pouvoir en colorier un autre.
+Après avoir colorié un pixel, il doit attendre un certain nombre de secondes (10 par défault) avant de pouvoir en colorier un autre.
+
+**Le but ? Réussir à dessiner des motifs sans que les autres utilisateurs nous en empêchent**
 
 ### Système réparti
 
 L'application est répartie sur les différents sites, correspondant à autant d'utilisateurs.
-La donnée partagée est la grille de pixels.
-Chaque fois qu'un joueur pose un pixel, ce pixel est partagé aux autres sites, et donc apparaît sur la grille des autres joueurs.
+La donnée partagée est la grille de pixels (en effet, chaque instance de site possède sa propre copie de la donnée).
+Dès lors qu'un joueur pose un pixel, ce pixel est partagé aux autres sites, et apparaît donc sur la grille des autres joueurs.
+Cette mise à jour ainsi que l'ensemble des autres fonctionnalités réparties de l'application reposent sur un système de communication dont le protocole est propre à l'application répartie.
+
+
 
 ## Architecture
+
+<img src="schema-architecture.png" alt="pixel-war-architecture" width="500" height="400">
+
 
 ### Organisation d'un site
 
@@ -44,26 +54,44 @@ Un message classique a donc ce champ placé à *false*.
 Lorsqu'une app de contrôle envoie un message, elle l'envoie aux deux apps avec lesquelles elle a un arc sortant : son app de base et l'app de contrôle suivante sur l'anneau.
 Afin de différencier les messages destinés à une app de contrôle de ceux destinés à un app de base, nous ajoutons le caractère *A* au début des seconds.
 
-## Cohérence des réplicats
+## Cohérence des réplicats : algorithme d'exclusion mutuelle
+
+<img src="schema-instantane.png" alt="pixel-war-instantane" width="300" height="150">
+
+### Concept
 
 Afin de garantir la cohérence des réplicats, une seule modification à la fois n'est autorisée.
 Cette modification est ensuite propagée aux autres réplicats.
 
-Nous avons pour cela implémenté l'algorithme de la file d'attente répartie que nous avons dû adapter à notre structure en anneau.
-Dans notre application, une exclusion mutuelle était nécessaire uniquement pour l'écriture de la donnée partagée.
+Nous avons pour cela implémenté **l'algorithme de la file d'attente répartie** que nous avons dû adapter à notre structure en anneau.
+Dans notre application, une exclusion mutuelle était nécessaire uniquement pour **l'écriture** de la donnée partagée.
 
-Lorsqu'un site entre en section critique, il est alors autorisé à modifier le pixel voulu et à diffuser au reste du réseau ce pixel.
-Ce pixel parcourt alors tout l'anneau jusqu'à revenir au site qui l'a envoyé.
-Sur le chemin, chaque site récupère l'information et transmet le pixel à modifier à son app de base.
+### Fonctionnement
 
-## Sauvegarde
+Lorsqu'un site souhaite ajouter un pixel sur la carte, il effectue d'abord une demande à son application de contrôle qui vérifie et fait inscrire cette demande auprès des autres utilisateurs.
+Pendant ce temps là, l'ajout est en attente.
+Si sa demande est la plus ancienne (ceci est calculé grâce aux estampilles (numéro de site et horloge) des sites), il obtient l'autorisation d'accès.
+Sinon, chaque site le catégorise comme demandeur et enregistre son horloge pour lui donner priorité la fois suivante.
+
+Lorsqu'un site entre en section critique, il est alors autorisé à modifier le pixel escompté et à diffuser ce pixel au reste du réseau.
+Immédiatement après avoir envoyé ce pixel, le site demandeur prévient les autres sites qu'il a terminé via un message de libération.
+Sur le chemin, chaque site reçoit le pixel et puis le transmet, ainsi que le message de libération. 
+
+Si par hasard un site avait demandé l'accès à la section critique pendant que le premier site l'avait, alors la recéption de ce message de libération lui donnera l'accès.
+Si plusieurs sites sont dans ce cas, le premier a avoir demandé l'accès sera privilégié, les autres devront attendre leur tour dans l'ordre.
+
+## Sauvegarde : algorithme de calcul d'instantané
+
+### Concept
 
 Nous avons implémenté un système de sauvegarde dans notre application.
 Une app de base peut envoyer le message *sauvegarde* à son app de contrôle, ce qui lance alors une sauvegarde globale.
-Pour cela, nous utilisons un algorithme de lestage avec reconstitution de configuration.
+Pour cela, nous utilisons un **algorithme de lestage avec reconstitution de configuration**.
 Le site initiateur de la sauvegarde construit un état global du système, représenté par le type **EtatGlobal**.
 Cet état global contient une liste d'états locaux, il y en a autant qu'il y a de sites sur le réseau.
 Il contient également une liste de messages préposts.
+
+### Fonctionnement
 
 Lorsqu'un site est prévenu de la sauvegarde, sa couleur passe de *Blanc* à *Jaune*.
 Il envoie alors son état local sur l'anneau pour que le site initiateur le reçoive.
@@ -93,3 +121,20 @@ Le script *anneau-unidirectionnel.sh* permet de construire l'anneau avec des com
 Cet anneau comporte trois sites, contenant chacun une app de base et une app de contrôle.
 
 Le script *nettoyage.sh* permet de supprimer les files créées par le script précédent.
+
+## Utilisation
+
+
+### Mode automatique
+
+Éxecuter la commande suivante à la racine du projet 
+```
+sh nettoyage.sh && sh anneau-unidirectionnel.sh
+```
+
+### Mode graphique
+
+Il faut décommenter les lignes avec l'option **-m g** dans le script **anneau-unidirectionnel.sh** et lancer la commande :
+```
+sh nettoyage.sh && sh anneau-unidirectionnel.sh
+```
