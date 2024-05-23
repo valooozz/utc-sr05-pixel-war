@@ -40,7 +40,9 @@ func lecture() {
 
 func traiterMessagePixel(str string) {
 	messagePixel := utils.StringToMessagePixel(str)
-	wsSend(utils.MessagePixelToString(messagePixel))
+	if modeDeLancement == "g" {
+		wsSend(utils.MessagePixelToString(messagePixel))
+	}
 }
 
 // Enregistre la sauvegarde dans un fichier

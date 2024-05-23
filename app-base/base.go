@@ -60,6 +60,7 @@ var accesSC = false // false si on n'est pas en section critique, true si est en
 var pMode = flag.String("m", "a", "mode") //"g" ou "a" pour graphique ou automatique
 var pPort = flag.Int("port", 4444, "n° de port")
 var pAddr = flag.String("addr", "localhost", "nom/adresse machine")
+var modeDeLancement string
 
 func main() {
 	flag.Parse()
@@ -67,7 +68,7 @@ func main() {
 	// ainsi que le mode de lancement
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
-	modeDeLancement := *pMode
+	modeDeLancement = *pMode
 	port := *pPort
 	addr := *pAddr
 
