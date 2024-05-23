@@ -2,15 +2,18 @@ package main
 
 import (
 	"flag"
-	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
-	"image/color"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 	"utils"
 )
+
+func envoyerPixel(positionX int, positionY int, rouge int, vert int, bleu int) {
+	// On envoie un message contenant le pixel posé à l'app de contrôle
+	messagePixel := utils.MessagePixel{positionX, positionY, rouge, vert, bleu}
+	envoyerMessage(utils.MessagePixelToString(messagePixel))
+}
 
 func nSecondsSnapshot(n int) {
 	// On envoie un message de sauvegarde automatiquement après n secondes
@@ -45,42 +48,6 @@ func sendPeriodic(nbMessages int, slower bool) {
 	utils.DisplayWarning(monNom, "sendPeriodic", "SEND PERIODIC FINIT")
 }
 
-func attenteDroit(n int) {
-	// Définit une attente de n secondes avant de pouvoir poser un pixel de nouveau
-	time.Sleep(time.Duration(n) * time.Second)
-	jePeux = true
-}
-
-func clicGaucheMatrice(game *Game, positionX int, positionY int, rouge int, vert int, bleu int) {
-	// Lors de la pose d'un pixel (clic gauche)
-	if jePeux {
-		// On demande l'accès à la section critique
-		demandeSC()
-		// Mise à jour de la matrice locale
-		game.UpdateMatrix(positionX, positionY, uint8(rouge), uint8(vert), uint8(bleu))
-		// On envoie le pixel posé à app-controle
-		envoyerPixel(positionX, positionY, rouge, vert, bleu)
-		// On libère la section critique
-		relacherSC()
-		// On empêche la pose de nouveaux pixels pendant 10 secondes
-		jePeux = false
-		go attenteDroit(10)
-	}
-}
-
-func clicGaucheSaveLogo() {
-	// Lancement de la sauvegarde lorsque le bouton de sauvegarde est cliqué
-	mutex.Lock()
-	envoiSequentiel("sauvegarde")
-	mutex.Unlock()
-}
-
-// Variable globales d'interface
-// jePeux donne la permission de poser un pixel
-// saveAccess donne la permission de lancer une sauvegarde
-var jePeux = true
-var saveAccess = true
-
 // Variables globales de répartition
 var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "base", "nom")
@@ -91,6 +58,8 @@ var accesSC = false // false si on n'est pas en section critique, true si est en
 
 // Variables globales d'utilisation
 var pMode = flag.String("m", "a", "mode") //"g" ou "a" pour graphique ou automatique
+var pPort = flag.Int("port", 4444, "n° de port")
+var pAddr = flag.String("addr", "localhost", "nom/adresse machine")
 
 func main() {
 	flag.Parse()
@@ -99,60 +68,25 @@ func main() {
 	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 	cheminSauvegardes = *pPath
 	modeDeLancement := *pMode
-	var game *Game
+	port := *pPort
+	addr := *pAddr
 
 	//Si l'option m == "g" on lance l'interface graphique, sinon le mode terminal ou automatique
 	if modeDeLancement == "g" {
-		lancementModeGraphique(game)
+		lancementModeGraphique(strconv.Itoa(port), addr)
 	} else {
-		lancementModeAutomatique(game)
+		lancementModeAutomatique()
 	}
 }
 
-func lancementModeGraphique(game *Game) {
-	// On initialise l'interface graphique sous forme d'une matrice
-	matrix := make([][]Pixel, 100)
-	for y := 0; y < 100; y++ {
-		matrix[y] = make([]Pixel, 100)
-		for x := 0; x < 100; x++ {
-			matrix[y][x] = Pixel{
-				R: 255,
-				G: 255,
-				B: 255,
-			}
-		}
-	}
-
-	//IMAGE
-	// On initialise la roue de couleur
-	colorWheel, _, err := ebitenutil.NewImageFromFile("app-base/color_wheel.png")
-	if err != nil {
-		panic(err)
-	}
-
-	//BOUTTON SAUVEGARDE
-	// On initialise le bouton de sauvegarde
-	saveLogo, _, err := ebitenutil.NewImageFromFile("app-base/saveLogo.png")
-	if err != nil {
-		panic(err)
-	}
-
-	// On initialise l'objet game qui sert d'interface graphique
-	game = &Game{
-		Matrix:        matrix,
-		ColorWheel:    colorWheel,
-		SaveLogo:      saveLogo,
-		SelectedColor: color.RGBA{R: 0, G: 0, B: 0, A: 0xFF},
-	}
-	// On lance une goroutinede lecture des messages ainsi que l'interface graphique
-	go lecture(game)
-	err = ebiten.RunGame(game)
-	if err != nil {
-		return
-	}
+func lancementModeGraphique(port string, addr string) {
+	// On lance une goroutine de lecture des messages ainsi que l'interface graphique
+	go lecture()
+	launchServer(port, addr)
+	//ici potentiellement lancer un client automatiquement ou dans le script
 }
 
-func lancementModeAutomatique(game *Game) {
+func lancementModeAutomatique() {
 	//On lance le snapshot sur A1 au bout de 10 secondes (A1 doit être en mode automatique biensûr)
 	if monNom[0:2] == "A1" {
 		go nSecondsSnapshot(10)
@@ -162,13 +96,8 @@ func lancementModeAutomatique(game *Game) {
 	if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
 		go sendPeriodic(20, true)
 	}
-	// Il n'y a pas d'interface graphique dans le mode automatique
-	game = &Game{
-		Matrix:        nil,
-		ColorWheel:    nil,
-		SelectedColor: color.RGBA{},
-	}
-	go lecture(game)
+
+	go lecture()
 	//On décide de bloquer le programme principal
 	for {
 		time.Sleep(time.Duration(60) * time.Second)

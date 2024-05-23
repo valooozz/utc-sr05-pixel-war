@@ -4,13 +4,12 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 	"utils"
 )
 
 // Quand le programme n'est pas en train d'écrire, il lit
-func lecture(game *Game) {
+func lecture() {
 	var rcvmsg string
 
 	for {
@@ -27,7 +26,7 @@ func lecture(game *Game) {
 				traiterMessageSauvegarde(rcvmsg[1:])
 				// Un message contenant positionX est un messagePiexel
 			} else if utils.TrouverValeur(rcvmsg[1:], "positionX") != "" {
-				traiterMessagePixel(rcvmsg[1:], game)
+				traiterMessagePixel(rcvmsg[1:])
 			} else if utils.TrouverValeur(rcvmsg[1:], "typeSC") != "" {
 				traiterMessageTypeSC()
 			} else {
@@ -39,14 +38,9 @@ func lecture(game *Game) {
 	}
 }
 
-func traiterMessagePixel(str string, game *Game) {
-	// Si l'interface graphique est définie alors on met à jour avec le pixel reçu
-	if game.Matrix != nil {
-		messagePixel := utils.StringToMessagePixel(str)
-		changerPixel(messagePixel, game)
-	} else {
-		//utils.DisplayInfo(monNom, "MsgPix", "Je mets à jour avec : "+str)
-	}
+func traiterMessagePixel(str string) {
+	messagePixel := utils.StringToMessagePixel(str)
+	wsSend(utils.MessagePixelToString(messagePixel))
 }
 
 // Enregistre la sauvegarde dans un fichier
@@ -93,16 +87,4 @@ func traiterMessageSauvegarde(str string) {
 // On a reçu une validation de notre app de contrôle pour accéder à la section critique
 func traiterMessageTypeSC() {
 	accesSC = true
-}
-
-func changerPixel(messagePixel utils.MessagePixel, game *Game) {
-	// On récupère les informations sur le pixel à changer
-	messageString := utils.MessagePixelToString(messagePixel)
-	cr, _ := strconv.Atoi(utils.TrouverValeur(messageString, "R"))
-	cb, _ := strconv.Atoi(utils.TrouverValeur(messageString, "B"))
-	cg, _ := strconv.Atoi(utils.TrouverValeur(messageString, "G"))
-	x, _ := strconv.Atoi(utils.TrouverValeur(messageString, "positionX"))
-	y, _ := strconv.Atoi(utils.TrouverValeur(messageString, "positionY"))
-	// On appelle la fonction pour mettre à jour le pixel
-	game.UpdateMatrix(x, y, uint8(cr), uint8(cg), uint8(cb))
 }
