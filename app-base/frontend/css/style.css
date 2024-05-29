@@ -4,17 +4,49 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-   }
+    color: #fff;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 60px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #ffc000;
+    text-shadow: 3px 3px 6px #000, 0 0 10px #e36c09, 0 0 20px #e36c09;
+    font-weight: bold;
+    font-family: 'Arial', sans-serif;
+}
+
+
+hr {
+    width: 100%;
+    border: 1px solid #fff;
+    margin: 20px 0;
+}
+
+form {
+    margin-bottom: 20px;
+}
+
+form p {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
 
 button {
     text-decoration: none;
-    padding: 6px;
+    padding: 10px 20px;
     border: none;
     background-color: #ffc000;
     border-radius: 21px;
     margin-right: 10px;
+    cursor: pointer;
+    font-size: 16px;
 }
-
 
 button:hover {
     background-color: #e36c09;
@@ -24,45 +56,53 @@ input {
     border-radius: 21px;
     text-decoration: none;
     border: none;
-    padding: 6px;
+    padding: 10px;
+    font-size: 16px;
+}
+
+#logs {
+    max-height: 10vh;
+    overflow-y: scroll;
+    background-color: #333;
+    border: 1px solid #fff;
+    padding: 10px;
+    width: 100%;
 }
 
 canvas {
     margin-bottom: 20px;
+    border: 1px solid #fff;
+    display: block;
 }
 
 .color-bar {
     display: flex;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    justify-content: center;
 }
 
 .color-box {
     height: 30px;
     width: 60px;
     margin: 4px;
+    border: 1px solid #fff;
+    cursor: pointer;
 }
 
-.color-black {
-    background-color: #000;
-}
-
-.color-lightblue {
-    background-color: lightblue;
-}
-
-.color-blue {
-    background-color: rgb(31,20,230);
-}
-
-
-
-.color-orange {
-    background-color: orange;
-}
-
-.color-pink {
-    background-color: pink;
-}
-
-.color-yellow {
-    background-color: yellow;
-}
+.color-red { background-color: rgb(255, 0, 0); }
+.color-salmon { background-color: rgb(250, 128, 114); }
+.color-orange { background-color: rgb(255, 165, 0); }
+.color-gold { background-color: rgb(255, 215, 0); }
+.color-yellow { background-color: rgb(255, 255, 0); }
+.color-khaki { background-color: rgb(240, 230, 140); }
+.color-green { background-color: rgb(0, 255, 0); }
+.color-lime { background-color: rgb(0, 255, 0); }
+.color-aquamarine { background-color: rgb(127, 255, 212); }
+.color-lightblue { background-color: rgb(173, 216, 230); }
+.color-cyan { background-color: rgb(0, 255, 255); }
+.color-blue { background-color: rgb(0, 0, 255); }
+.color-navy { background-color: rgb(0, 0, 128); }
+.color-purple { background-color: rgb(128, 0, 128); }
+.color-violet { background-color: rgb(238, 130, 238); }
+.color-lavender { background-color: rgb(230, 230, 250); }
