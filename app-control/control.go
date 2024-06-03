@@ -11,29 +11,45 @@ import (
 
 // Définition des variables
 var mutex = &sync.Mutex{}
-var H = 0
+var pNom = flag.String("n", "controle", "nom")
+var pNbsites = flag.Int("nbsites", 3, "nom")
+var monNom string // Nom du site (option -n + pid)
+var Site int      // Numéro du site
+var N int         // Nombre de sites dans le réseau
+
 var horlogeVectorielle = utils.HorlogeVectorielle{}
 var maCouleur = utils.Blanc
 var jeSuisInitiateur = false
 var monEtatLocal utils.EtatLocal
 var etatGlobal utils.EtatGlobal
-var monBilan = 0
 var nbEtatsAttendus = 0
-var nbMessagesAttendus = 0
 
-var N = 3
-
-var pNom = flag.String("n", "controle", "nom")
-var monNom string
+var HEM = 0                                // Horloge Exclusion Mutuelle
+var tabSC []utils.MessageExclusionMutuelle // Tableau utilisé par la file d'attente répartie afin de gérer les sections critiques
 
 func main() {
-	flag.Parse()
-	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
 
+	// On initialise le nom et le numéro du site
+	flag.Parse()
+	Site = utils.InitialisationNumSite(*pNom) - 1
+	monNom = *pNom + "-" + strconv.Itoa(os.Getpid())
+	N = *pNbsites
+	tabSC = make([]utils.MessageExclusionMutuelle, N)
+
+	// On initialise le tableau de la file d'attente répartie avec Liberation partout
+	for i := 0; i < len(tabSC); i++ {
+		tabSC[i].Type = utils.Liberation
+		tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
+	}
+
+	// On initialise l'horloge vectorielle avec le site local pour l'instant
 	horlogeVectorielle[monNom] = 0
+
+	// On initialise l'état local
 	monEtatLocal.NomSite = monNom
 	monEtatLocal.Vectorielle = horlogeVectorielle
 
+	// On lance une go-routine pour écouter les messages entrants sur l'entrée standard
 	go lecture()
 	for {
 		time.Sleep(time.Duration(60) * time.Second)

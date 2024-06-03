@@ -1,8 +1,8 @@
 package utils
 
 // Définition des types
-const sepM = "/" //séparateur dans les messages
-const sepP = "=" //séparateur ddans les paires clé/valeur
+const sepM = "/" // séparateur dans les messages
+const sepP = "=" // séparateur dans les paires clé/valeur
 
 type Couleur bool
 
@@ -19,9 +19,13 @@ type MessagePixel struct {
 	Bleu      int
 }
 
+type MessageSauvegarde struct {
+	ListMessagePixel []MessagePixel
+	Vectorielle      HorlogeVectorielle
+}
+
 type Message struct {
 	Pixel       MessagePixel
-	Horloge     int
 	Vectorielle HorlogeVectorielle
 	Nom         string
 	Couleur     Couleur
@@ -41,7 +45,35 @@ type EtatGlobal struct {
 
 type MessageEtat struct {
 	EtatLocal EtatLocal
-	Bilan     int
 }
 
 type HorlogeVectorielle map[string]int
+
+/////////////////////
+//Exclusion mutuelle
+/////////////////////
+
+type Estampille struct {
+	Site    int // numéro du site
+	Horloge int // horloge entière
+}
+
+// Type de demande d'accès à la section critique (accès, libération)
+type TypeSC int
+
+const (
+	Requete    TypeSC = 0
+	Liberation TypeSC = 1
+	Accuse     TypeSC = 2
+)
+
+// Message pour la demande d'accès à la section critique
+type MessageExclusionMutuelle struct {
+	Type       TypeSC
+	Estampille Estampille
+}
+
+type MessageAccuse struct {
+	SiteCible  int
+	Estampille Estampille
+}

@@ -12,10 +12,11 @@ func lecture() {
 	for {
 		fmt.Scanln(&rcvmsg)
 		if rcvmsg == "" {
-			utils.DisplayWarning(monNom, "lecture", "Message vide reçu")
+			utils.DisplayError(monNom, "lecture", "Message vide reçu -> Fin du processus")
 			continue
 		}
 		mutex.Lock()
+
 		// On traite uniquement les messages qui ne commencent pas par un 'A'
 		if rcvmsg[0] != uint8('A') {
 
@@ -24,15 +25,28 @@ func lecture() {
 				traiterDebutSauvegarde()
 
 				// Traitement des messages de contrôle
-			} else if utils.TrouverValeur(rcvmsg, "horloge") != "" {
+			} else if utils.TrouverValeur(rcvmsg, "couleur") != "" {
 				if utils.TrouverValeur(rcvmsg, "prepost") == "true" {
 					traiterMessagePrepost(rcvmsg)
 				} else {
-					//L'affichage sur stderr se fait dans le traitement pour ce type de message
 					traiterMessageControle(rcvmsg)
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
 				traiterMessageEtat(rcvmsg)
+			} else if utils.TrouverValeur(rcvmsg, "siteCible") != "" {
+				traiterMessageAccuse(rcvmsg)
+			} else if utils.TrouverValeur(rcvmsg, "estampilleSite") != "" {
+				demande := utils.StringToMessageTypeSC(rcvmsg)
+				switch demande {
+				case utils.Requete:
+					traiterMessageRequete(rcvmsg)
+				case utils.Liberation:
+					traiterMessageLiberation(rcvmsg)
+				default:
+					utils.DisplayError(monNom, "lecture", "Demande de SC non supportée")
+				}
+			} else if utils.TrouverValeur(rcvmsg, "typeSC") != "" {
+				traiterMessageSC(rcvmsg)
 			} else {
 				traiterMessagePixel(rcvmsg)
 			}
@@ -51,28 +65,24 @@ func traiterMessageControle(rcvmsg string) {
 		return
 	}
 
-	utils.DisplayWarning(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
+	utils.DisplayInfo(monNom, "Controle", "Message de contrôle reçu : "+rcvmsg)
 
 	// Extraction de la partie pixel
 	messagePixel := message.Pixel
-
-	// Recalage de l'horloge locale et mise à jour de sa valeur dans le message également
-	H = utils.Recaler(H, message.Horloge)
-	message.Horloge = H
 
 	// Première fois qu'on reçoit l'ordre de transmettre sa sauvegarde
 	if message.Couleur == utils.Jaune && maCouleur == utils.Blanc {
 		maCouleur = utils.Jaune
 
-		utils.DisplayError(monNom, "Controle", "Passage en jaune")
+		utils.DisplayInfoSauvegarde(monNom, "Controle", "Passage en jaune")
 
-		messageEtat := utils.MessageEtat{monEtatLocal, monBilan}
-		utils.DisplayError(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
+		messageEtat := utils.MessageEtat{monEtatLocal}
+		utils.DisplayInfoSauvegarde(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
 		envoyerMessageEtat(messageEtat)
 
 		// Réception d'un message prépost pas encore marqué comme prépost
 	} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
-		utils.DisplayError(monNom, "Controle", "Prepost")
+		utils.DisplayInfoSauvegarde(monNom, "Controle", "Prepost détecté")
 		messagePrepost := message
 		messagePrepost.Prepost = true
 		envoyerMessageControle(messagePrepost)
@@ -83,7 +93,6 @@ func traiterMessageControle(rcvmsg string) {
 	// Mise à jour de l'horloge vectorielle locale et mise à jour de sa valeur dans le message également
 	horlogeVectorielle = utils.MajHorlogeVectorielle(monNom, horlogeVectorielle, message.Vectorielle)
 	message.Vectorielle = horlogeVectorielle
-	utils.DisplayInfo(monNom, "Controle", utils.HorlogeVectorielleToString(horlogeVectorielle))
 
 	// On met à jour l'état local
 	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
@@ -91,25 +100,22 @@ func traiterMessageControle(rcvmsg string) {
 
 	envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
 	envoyerMessageBase(messagePixel) // Pour l'app de base
-
-	utils.DisplayInfo(monNom, "Controle", "monBilanActuel = "+strconv.Itoa(int(monBilan)))
 }
 
 func traiterMessagePrepost(rcvmsg string) {
+
 	if !jeSuisInitiateur {
-		utils.DisplayWarning(monNom, "Prepost", "Prepost transféré : "+rcvmsg)
+		utils.DisplayInfoSauvegarde(monNom, "Prepost", "Prepost transféré : "+rcvmsg)
 		go envoyerMessage(rcvmsg) // On fait suivre le message sur l'anneau
 		return
 	}
-
-	nbMessagesAttendus--
 
 	// On ajoute le message prepost à la sauvegarde générale
 	message := utils.StringToMessage(rcvmsg)
 	etatGlobal.ListMessagePrepost = append(etatGlobal.ListMessagePrepost, message)
 
 	if nbEtatsAttendus == 0 {
-		utils.DisplayInfo(monNom, "Prepost", "Fin par prepost")
+		utils.DisplayInfoSauvegarde(monNom, "Prepost", "Fin par prepost")
 		finSauvegarde()
 	}
 }
@@ -117,40 +123,38 @@ func traiterMessagePrepost(rcvmsg string) {
 func traiterMessageEtat(rcvmsg string) {
 
 	if !jeSuisInitiateur {
-		utils.DisplayError(monNom, "Etat", "Transfert message etat : "+rcvmsg)
+		utils.DisplayInfoSauvegarde(monNom, "Etat", "Transfert message etat : "+rcvmsg)
 		go envoyerMessage(rcvmsg)
 		return
 	}
 
 	messageEtat := utils.StringToMessageEtat(rcvmsg)
-	utils.DisplayError(monNom, "Etat", "MessageEtat recu (bilan="+strconv.Itoa(messageEtat.Bilan)+")")
+	utils.DisplayInfoSauvegarde(monNom, "Etat", "MessageEtat recu")
 
 	// On ajoute l'état local reçu à la sauvegarde générale
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(messageEtat.EtatLocal))
 
 	nbEtatsAttendus--
 
-	utils.DisplayError(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus)+" ; nbMessagesAttendus="+strconv.Itoa(nbMessagesAttendus))
+	utils.DisplayInfoSauvegarde(monNom, "Etat", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus))
 	if nbEtatsAttendus == 0 {
-		utils.DisplayError(monNom, "Etat", "Fin par etat")
+		utils.DisplayInfoSauvegarde(monNom, "Etat", "Fin par etat")
 		finSauvegarde()
 	}
 }
 
 func traiterMessagePixel(rcvmsg string) {
-	utils.DisplayWarning(monNom, "lecture", "Message pixel reçu : "+rcvmsg)
+	utils.DisplayInfo(monNom, "Pixel", "Message pixel reçu : "+rcvmsg)
 
 	messagePixel := utils.StringToMessagePixel(rcvmsg)
-	H++
 
 	horlogeVectorielle[monNom]++
-	utils.DisplayInfo(monNom, "Pixel", utils.HorlogeVectorielleToString(horlogeVectorielle))
 
 	// Mise à jour de l'état local
 	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = utils.CopyHorlogeVectorielle(horlogeVectorielle)
 
-	message := utils.Message{messagePixel, H, horlogeVectorielle, monNom, maCouleur, false}
+	message := utils.Message{messagePixel, horlogeVectorielle, monNom, maCouleur, false}
 	envoyerMessageControle(message)
 }
 
@@ -158,29 +162,120 @@ func traiterDebutSauvegarde() {
 	maCouleur = utils.Jaune
 	jeSuisInitiateur = true
 	nbEtatsAttendus = N - 1
-	nbMessagesAttendus = monBilan
 
-	utils.DisplayError(monNom, "DebutSauvegarde", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus))
+	utils.DisplayInfoSauvegarde(monNom, "DebutSauv", "nbEtatsAttendus="+strconv.Itoa(nbEtatsAttendus))
 
 	// On ajoute l'état local à la sauvegarde générale
-	for _, mp := range monEtatLocal.ListMessagePixel {
-		utils.DisplayError(monNom, "Debut", utils.MessagePixelToString(mp))
-	}
 	etatGlobal.ListEtatLocal = append(etatGlobal.ListEtatLocal, utils.CopyEtatLocal(monEtatLocal))
 }
 
 func finSauvegarde() {
-	utils.DisplayError(monNom, "Fin", "Sauvegarde complétée")
+	utils.DisplayInfoSauvegarde(monNom, "Fin", "Sauvegarde complétée")
+
+	// On affiche l'état global (liste des états locaux et liste des messages préposts)
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
-		utils.DisplayInfo(monNom, "Fin", utils.EtatLocalToString(etatLocal))
+		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.EtatLocalToString(etatLocal))
 	}
 	for _, mp := range etatGlobal.ListMessagePrepost {
-		utils.DisplayInfo(monNom, "Fin", utils.MessageToString(mp))
+		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.MessageToString(mp))
 	}
 
-	if utils.CoupureEstCoherente(etatGlobal) {
-		utils.DisplayInfo(monNom, "Fin", "COUPURE COHÉRENTE !")
+	// On calcule si la coupure et cohérente et on récupère sa date (max de la vectorielle de chaque site)
+	coherente, maxVectorielle := utils.CoupureEstCoherente(etatGlobal)
+
+	if coherente {
+		utils.DisplayInfoSauvegarde(monNom, "Fin", "COUPURE COHÉRENTE !")
+		configurationGlobale := utils.ReconstituerCarte(etatGlobal)
+		messageSauvegarde := utils.MessageSauvegarde{ListMessagePixel: configurationGlobale, Vectorielle: maxVectorielle}
+		envoyerMessageBaseSauvegarde(messageSauvegarde)
 	} else {
-		utils.DisplayInfo(monNom, "Fin", "Coupure non cohérente...")
+		utils.DisplayError(monNom, "Fin", "Coupure non cohérente...")
+	}
+}
+
+/////////////////////
+// Exclusion mutuelle
+/////////////////////
+
+// APP BASE -> APP CONTROLE
+func traiterMessageSC(rcvmsg string) {
+	demande := utils.StringToMessageTypeSC(rcvmsg)
+	
+	var typeToString string
+	if demande == utils.Requete {
+		typeToString = "REQUÊTE d'accès à la section critique"
+	} else {
+		typeToString = "LIBÉRATION de l'accès à la section critique"
+	}
+	utils.DisplayInfoSC(monNom, "SC", "A"+strconv.Itoa(Site+1)+" envoie : "+typeToString)
+
+	// On met à jour l'horloge locale et le tableau de la file d'attente
+	HEM++
+	message := utils.MessageExclusionMutuelle{Type: demande, Estampille: utils.Estampille{Site: Site, Horloge: HEM}}
+	tabSC[Site] = message
+
+	// On transmet la Requete ou la Liberation sur l'anneau
+	envoyerMessageSCControle(message)
+}
+
+// APP CONTROL -> APP CONTROL
+func traiterMessageRequete(rcvmsg string) {
+	demande := utils.StringToMessageExclusionMutuelle(rcvmsg)
+
+	// Si le message ne vient pas de nous
+	if demande.Estampille.Site != Site {
+
+		// On met à jour l'horloge et le tableau de la file d'attente
+		HEM = utils.Recaler(demande.Estampille.Horloge, HEM)
+		tabSC[demande.Estampille.Site] = demande
+
+		// On envoie un Accuse à l'émetteur de la Requete et on transmet celle-ci sur l'anneau
+		envoyerMessageAccuse(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
+		envoyerMessageSCControle(demande)
+
+		// On regarde si on peut accepter une SC chez nous
+	} else if utils.QuestionEntreeSC(Site, tabSC) {
+		utils.DisplayInfoSC(monNom, "Requete", "SC acceptée par Requete !")
+		envoyerMessageSCBase(tabSC[Site].Type)
+	} else {
+		utils.DisplayInfoSC(monNom, "Requete", "SC refusée ! "+" La SC est occupée par C"+strconv.Itoa(utils.PlusVieilleRequeteAlive(Site, tabSC)+1)+" !")
+	}
+}
+
+// APP CONTROL -> APP CONTROL
+func traiterMessageLiberation(rcvmsg string) {
+	liberation := utils.StringToMessageExclusionMutuelle(rcvmsg)
+
+	// Si le message ne vient pas de nous
+	if liberation.Estampille.Site != Site {
+		
+		// On met à jour l'horloge et le tableau de la file d'attente
+		HEM = utils.Recaler(liberation.Estampille.Horloge, HEM)
+		tabSC[liberation.Estampille.Site] = liberation
+
+		// On transmet le message sur l'anneau
+		envoyerMessageSCControle(liberation)
+	}
+
+	// On regarde si on peut accepter une SC chez nous
+	if utils.QuestionEntreeSC(Site, tabSC) {
+		utils.DisplayInfoSC(monNom, "Liberation", "SC acceptée par Liberation !")
+		envoyerMessageSCBase(tabSC[Site].Type)
+	}
+}
+
+// APP CONTROL -> APP CONTROL
+func traiterMessageAccuse(rcvmsg string) {
+	message := utils.StringToMessageAccuse(rcvmsg)
+
+	// Si l'Accuse n'est pas pour nous, on le transmet et on quitte la fonction
+	if Site != message.SiteCible {
+		envoiSequentiel(rcvmsg)
+		return
+	}
+
+	// Si le site qui envoie l'Accuse ne fait pas de requête, on passe son état à Accuse dans le tableau de la file d'attente
+	if tabSC[message.Estampille.Site].Type != utils.Requete {
+		tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
 	}
 }

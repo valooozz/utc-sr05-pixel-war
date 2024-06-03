@@ -1,0 +1,56 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/app-base/frontend/css/style.css">
+</head>
+<body>
+<h1>Pixel War</h1>
+
+<HR>
+
+<form>
+    <p>
+        <button id="connecter">Connecter</button>
+        <button id="fermer">Fermer</button>
+        host : <input id="host" type="text" size="10" value="localhost">
+        port : <input id="port" type="text" maxlength="5" size="5" value="4444">
+    </p>
+</form>
+
+
+
+<hr>
+<b> Logs </b>
+<div id="logs" style="max-height: 10vh;overflow-y: scroll;"></div>
+<hr>
+<canvas></canvas>
+<div class="color-bar">
+    <div class="color-box color-red" data-color="rgb(255, 0, 0)"></div>
+    <div class="color-box color-salmon" data-color="rgb(250, 128, 114)"></div>
+    <div class="color-box color-orange" data-color="rgb(255, 165, 0)"></div>
+    <div class="color-box color-gold" data-color="rgb(255, 215, 0)"></div>
+    <div class="color-box color-yellow" data-color="rgb(255, 255, 0)"></div>
+    <div class="color-box color-khaki" data-color="rgb(240, 230, 140)"></div>
+    <div class="color-box color-green" data-color="rgb(0, 255, 0)"></div>
+    <div class="color-box color-lime" data-color="rgb(0, 255, 0)"></div>
+    <div class="color-box color-aquamarine" data-color="rgb(127, 255, 212)"></div>
+    <div class="color-box color-lightblue" data-color="rgb(173, 216, 230)"></div>
+    <div class="color-box color-cyan" data-color="rgb(0, 255, 255)"></div>
+    <div class="color-box color-blue" data-color="rgb(0, 0, 255)"></div>
+    <div class="color-box color-navy" data-color="rgb(0, 0, 128)"></div>
+    <div class="color-box color-purple" data-color="rgb(128, 0, 128)"></div>
+    <div class="color-box color-violet" data-color="rgb(238, 130, 238)"></div>
+    <div class="color-box color-lavender" data-color="rgb(230, 230, 250)"></div>
+</div>
+<form>
+    <p>
+        <button id="envoyer">Poser le pixel</button>
+        <button id="sauvegarder">Sauvegarder</button>
+    </p>
+
+</form>
+
+
+<script type="module" src="index.js"></script>
+</body>
+</html>

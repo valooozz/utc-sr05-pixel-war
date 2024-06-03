@@ -1,66 +1,12 @@
 package utils
 
 import (
+	"math"
 	"strconv"
 	"strings"
 )
 
-//Définition des fonctions de service et de formattage des données
-
-func MessagePixelToString(pixel MessagePixel) string {
-	return sepM + sepP + "positionX" + sepP + strconv.Itoa(pixel.PositionX) + sepM + sepP + "positionY" + sepP +
-		strconv.Itoa(pixel.PositionY) + sepM + sepP + "R" + sepP + strconv.Itoa(pixel.Rouge) + sepM + sepP + "G" +
-		sepP + strconv.Itoa(pixel.Vert) + sepM + sepP + "B" + sepP + strconv.Itoa(pixel.Bleu)
-}
-
-func MessageToString(message Message) string {
-	c := ""
-	if message.Couleur {
-		c = "jaune"
-	} else {
-		c = "blanc"
-	}
-	return MessagePixelToString(message.Pixel) + sepM + sepP + "horloge" + sepP + strconv.Itoa(message.Horloge) +
-		sepM + sepP + "vectorielle" + sepP + HorlogeVectorielleToString(message.Vectorielle) + sepM + sepP + "nom" + sepP + message.Nom + sepM + sepP + "couleur" + sepP + c +
-		sepM + sepP + "prepost" + sepP + strconv.FormatBool(message.Prepost)
-
-}
-
-func EtatLocalToString(etatLocal EtatLocal) string {
-	sep1 := "#"
-	sep2 := ";"
-	l := ""
-	for _, messagePixel := range etatLocal.ListMessagePixel {
-		l += "_"
-		l += MessagePixelToString(messagePixel)
-	}
-
-	return sep1 + sep2 + "nom" + sep2 + etatLocal.NomSite +
-		sep1 + sep2 + "vectorielle" + sep2 + HorlogeVectorielleToString(etatLocal.Vectorielle) +
-		sep1 + sep2 + "liste" + sep2 + l
-}
-
-func MessageEtatToString(etat MessageEtat) string {
-	sep1 := "~"
-	sep2 := ","
-	return sep1 + sep2 + "etat" + sep2 + EtatLocalToString(etat.EtatLocal) + sep1 + sep2 + "bilan" + sep2 + strconv.Itoa(etat.Bilan)
-}
-
-func HorlogeVectorielleToString(horloge HorlogeVectorielle) string {
-	sep1 := "_"
-	sep2 := ":"
-	str := ""
-
-	for site := range horloge {
-		str += sep1
-		str += site
-		str += sep2
-		str += strconv.Itoa(horloge[site])
-	}
-
-	return str
-}
-
+// Trouve une valeur dans un message string transmis sur l'anneau
 func TrouverValeur(message string, cle string) string {
 	if len(message) < 4 {
 		return ""
@@ -77,70 +23,15 @@ func TrouverValeur(message string, cle string) string {
 	return ""
 }
 
-func StringToMessagePixel(str string) MessagePixel {
-	posX, _ := strconv.Atoi(TrouverValeur(str, "positionX"))
-	posY, _ := strconv.Atoi(TrouverValeur(str, "positionY"))
-	r, _ := strconv.Atoi(TrouverValeur(str, "R"))
-	v, _ := strconv.Atoi(TrouverValeur(str, "G"))
-	b, _ := strconv.Atoi(TrouverValeur(str, "B"))
-
-	messagepixel := MessagePixel{posX, posY, r, v, b}
-	return messagepixel
-}
-
-func StringToMessage(str string) Message {
-	messagepixel := StringToMessagePixel(str)
-	h, _ := strconv.Atoi(TrouverValeur(str, "horloge"))
-	hv := TrouverValeur(str, "vectorielle")
-	n := TrouverValeur(str, "nom")
-	cV := TrouverValeur(str, "couleur")
-	var c Couleur
-	if cV == "jaune" {
-		c = Jaune
-	} else {
-		c = Blanc
+// Recale une horloge entière
+func Recaler(x, y int) int {
+	if x < y {
+		return y + 1
 	}
-	prep, _ := strconv.ParseBool(TrouverValeur(str, "prepost"))
-	message := Message{messagepixel, h, StringToHorlogeVectorielle(hv), n, c, prep}
-	return message
+	return x + 1
 }
 
-func StringToMessageEtat(str string) MessageEtat {
-	etatLocal := StringToEtatLocal(TrouverValeur(str, "etat"))
-	bilan, _ := strconv.Atoi(TrouverValeur(str, "bilan"))
-
-	return MessageEtat{etatLocal, bilan}
-}
-
-func StringToEtatLocal(str string) EtatLocal {
-	var liste []MessagePixel
-	listeMessagePixel := TrouverValeur(str, "liste")
-	strVectorielle := TrouverValeur(str, "vectorielle")
-	tabListeMessagePixel := strings.Split(listeMessagePixel, "_")
-
-	for _, strMessagePixel := range tabListeMessagePixel {
-		if strMessagePixel != "" {
-			liste = append(liste, StringToMessagePixel(strMessagePixel))
-		}
-	}
-
-	return EtatLocal{TrouverValeur(str, "nom"), StringToHorlogeVectorielle(strVectorielle), liste}
-}
-
-func StringToHorlogeVectorielle(str string) HorlogeVectorielle {
-	horloge := HorlogeVectorielle{}
-	listeSites := strings.Split(str, "_")
-
-	for _, strSite := range listeSites {
-		if strSite != "" {
-			hSite := strings.Split(strSite, ":")
-			horloge[hSite[0]], _ = strconv.Atoi(hSite[1])
-		}
-	}
-
-	return horloge
-}
-
+// Met à jour l'horloge vectorielle locale avec celle reçue
 func MajHorlogeVectorielle(monNom string, locale, recue HorlogeVectorielle) HorlogeVectorielle {
 
 	// On met à jour les champs présents dans l'horloge locale
@@ -165,6 +56,7 @@ func MajHorlogeVectorielle(monNom string, locale, recue HorlogeVectorielle) Horl
 	return locale
 }
 
+// Retourne une copie d'une horloge vectorielle (utile à cause du fonctionnement des slices en go)
 func CopyHorlogeVectorielle(horlogeVectorielle HorlogeVectorielle) HorlogeVectorielle {
 
 	var copie = HorlogeVectorielle{}
@@ -176,7 +68,8 @@ func CopyHorlogeVectorielle(horlogeVectorielle HorlogeVectorielle) HorlogeVector
 	return copie
 }
 
-func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
+// Retourne Vrai si la coupure présente dans l'état global est cohérente, faux sinon
+func CoupureEstCoherente(etatGlobal EtatGlobal) (bool, map[string]int) {
 	isProcessed := make(map[string]bool)
 	mapMax := make(map[string]int)
 
@@ -192,24 +85,25 @@ func CoupureEstCoherente(etatGlobal EtatGlobal) bool {
 		for site, horloge := range etatLocal.Vectorielle {
 			if mapMax[site] < horloge { // Si l'horloge est plus grande que le max enregistré
 				if isProcessed[site] { // Si on a déjà passé le site, la coupure n'est pas cohérente
-					return false
+					return false, mapMax
 				} else { // Sinon, on met à jour le max
 					mapMax[site] = horloge
 				}
 			} else if mapMax[site] > horloge && etatLocal.NomSite == site {
-				return false // Si le max du site est plus grand que l'horloge de ce site sur ce site, la coupure n'est pas cohérente
+				return false, mapMax // Si le max du site est plus grand que l'horloge de ce site sur ce site, la coupure n'est pas cohérente
 			}
 		}
 		isProcessed[etatLocal.NomSite] = true // Le site a été process
 	}
 
-	return true
+	return true, mapMax
 }
 
+// Met à jour l'état local en ajoutant ou remplaçant un MessagePixel
 func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
 	var found = false
 	for i, pixel := range etatLocal.ListMessagePixel {
-		if pixel.PositionX == newMessagePixel.PositionX && pixel.PositionY == newMessagePixel.PositionY {
+		if memePosition(pixel, newMessagePixel) {
 			pixel.Rouge = newMessagePixel.Rouge
 			pixel.Vert = newMessagePixel.Vert
 			pixel.Bleu = newMessagePixel.Bleu
@@ -225,6 +119,7 @@ func MajEtatLocal(etatLocal EtatLocal, newMessagePixel MessagePixel) EtatLocal {
 	return etatLocal
 }
 
+// Retourne une copie de l'état local entré (utile à cause du fonctionnement des slices en go)
 func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
 	var copie = EtatLocal{
 		NomSite:          etatLocal.NomSite,
@@ -239,9 +134,110 @@ func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
 	return copie
 }
 
-func Recaler(x, y int) int {
-	if x < y {
-		return y + 1
+// Retourne une grille de pixels unique à partir d'un état global
+func ReconstituerCarte(etatGlobal EtatGlobal) []MessagePixel {
+	var carte = etatGlobal.ListEtatLocal[0].ListMessagePixel
+	var pixel MessagePixel
+
+	for _, message := range etatGlobal.ListMessagePrepost {
+		pixel = message.Pixel
+		carte = replaceOrAddPixel(carte, pixel)
 	}
-	return x + 1
+
+	return carte
+}
+
+/////////////////////
+// Exclusion mutuelle
+/////////////////////
+
+func QuestionEntreeSC(site int, tabSC []MessageExclusionMutuelle) bool {
+	cpt := 0
+
+	if tabSC[site].Type != Requete {
+		return false
+	}
+
+	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
+		if numOtherSite == site {
+			continue
+		}
+
+		if tabSC[site].Estampille.Horloge > tabSC[numOtherSite].Estampille.Horloge {
+			return false
+		}
+		if tabSC[site].Estampille.Horloge < tabSC[numOtherSite].Estampille.Horloge {
+			cpt++
+		} else {
+			if tabSC[site].Estampille.Site > tabSC[numOtherSite].Estampille.Site {
+				return false
+			}
+			cpt++
+		}
+	}
+
+	if cpt == len(tabSC)-1 {
+		return true
+	}
+	return false
+}
+
+func InitialisationNumSite(site string) int {
+	StartNumberIndex := 1
+	SiteString := site[StartNumberIndex:len(site)]
+	NumSite, _ := strconv.Atoi(SiteString)
+	return NumSite
+}
+
+func PlusVieilleRequeteAlive(site int, tabSC []MessageExclusionMutuelle) int {
+	sitePrioritaire := Estampille{Site: math.MaxInt, Horloge: math.MaxInt}
+	for numOtherSite := 0; numOtherSite < len(tabSC); numOtherSite++ {
+		if numOtherSite == site || tabSC[numOtherSite].Type != Requete {
+			continue
+		}
+		if tabSC[numOtherSite].Estampille.Horloge < sitePrioritaire.Horloge {
+			sitePrioritaire = tabSC[numOtherSite].Estampille
+		} else if tabSC[numOtherSite].Estampille.Horloge == sitePrioritaire.Horloge && tabSC[numOtherSite].Estampille.Site < sitePrioritaire.Site {
+			sitePrioritaire = tabSC[numOtherSite].Estampille
+		}
+	}
+	return sitePrioritaire.Site
+}
+
+////////////////////
+// FONCTIONS PRIVEES
+////////////////////
+
+// Retourne Vrai si les deux pixels entrés sont à la même position, Faux sinon
+func memePosition(pixel1, pixel2 MessagePixel) bool {
+	if pixel1.PositionX == pixel2.PositionX && pixel1.PositionY == pixel2.PositionY {
+		return true
+	}
+	return false
+}
+
+// Retourne Vrai si les deux pixels entrés sont de la même couleur, Faux sinon
+func memeCouleur(pixel1, pixel2 MessagePixel) bool {
+	if pixel1.Rouge == pixel2.Rouge && pixel1.Vert == pixel2.Vert && pixel1.Bleu == pixel2.Bleu {
+		return true
+	}
+	return false
+}
+
+// Met à jour une liste de pixels en remplaçant le pixel déjà présent à la même position, ou en l'ajoutant si la position n'y est pas
+func replaceOrAddPixel(carte []MessagePixel, newPixel MessagePixel) []MessagePixel {
+	var found = false
+
+	for i, pixel := range carte {
+		if memePosition(pixel, newPixel) {
+			carte[i] = newPixel
+			found = true
+		}
+	}
+
+	if !found {
+		carte = append(carte, newPixel)
+	}
+
+	return carte
 }
