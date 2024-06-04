@@ -226,3 +226,21 @@ func StringToMessageAccuse(str string) MessageAccuse {
 	message := MessageAccuse{s, estampille}
 	return message
 }
+
+////////////////
+// MessageNet
+////////////////
+
+func MessageNetToString(message MessageNet) string {
+	sep1 := "@"
+	sep2 := "+"
+	return sep1 + sep2 + "champFictif" + sep2 + "contenuFictif" + sep1 + sep2 + "messageControl" + sep2 +
+		message.MessageControl
+}
+
+func StringToMessageNet(str string) MessageNet {
+	champFictif := TrouverValeur(str, "champFictif")
+	messageControl := TrouverValeur(str, "messageControl")
+	message := MessageNet{champFictif, messageControl}
+	return message
+}

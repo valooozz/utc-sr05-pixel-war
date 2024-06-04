@@ -20,7 +20,7 @@ func lecture() {
 			continue
 		}
 		mutex.Lock()
-		if rcvmsg[0] == uint8('A') { // On traite le message s'il commence par un 'A'
+		if rcvmsg[0] == uint8('B') { // On traite le message s'il commence par un 'A'
 			// Traitement messages sauvegarde quand la sauvegarde a été terminée
 			if utils.TrouverValeur(rcvmsg[1:], "vectorielle") != "" {
 				traiterMessageSauvegarde(rcvmsg[1:])
