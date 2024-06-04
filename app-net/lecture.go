@@ -16,7 +16,7 @@ func lecture() {
 		mutex.Lock()
 		if rcvmsg[0] == uint8('N') {
 			message := rcvmsg[1:]
-			if utils.TrouverValeur(message, "champFictif") != "" {
+			if utils.TrouverValeur(message, "header") != "" {
 				traiterMessageNet(message)
 			} else { //Cas de la réception d'un message de l'app-control associée
 				traiterMessageControl(message)
@@ -28,13 +28,17 @@ func lecture() {
 }
 
 func traiterMessageNet(message string) {
+	utils.DisplayError(monNom, "traiterMessageNet", "Reçu : "+message)
 	//à l'avenir, tous les messages ne sont pas traités de cette manière mais traités ou non
 	messageNet := utils.StringToMessageNet(message)
+	//header := messageNet.Header à stocker derrière
 	messageControl := messageNet.MessageControl
 	envoyerControl(messageControl) //envoi à l'app de control du site courant
 }
 
 func traiterMessageControl(message string) {
-	messageNet := utils.MessageNet{ChampFictif: "contenuFictif", MessageControl: message}
+	header := utils.Header{ChampFictif: "contenuFictif"}
+	messageNet := utils.MessageNet{Header: header, MessageControl: message}
+	utils.DisplayError(monNom, "traiterMessageControl", "Envoi : "+utils.MessageNetToString(messageNet))
 	envoyerNet(utils.MessageNetToString(messageNet))
 }

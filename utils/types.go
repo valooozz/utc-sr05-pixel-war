@@ -83,6 +83,10 @@ type MessageAccuse struct {
 /////////////////////
 
 type MessageNet struct {
-	ChampFictif    string
+	Header         Header
 	MessageControl string
+}
+
+type Header struct {
+	ChampFictif string
 }
