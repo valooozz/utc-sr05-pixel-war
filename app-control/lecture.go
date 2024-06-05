@@ -17,8 +17,9 @@ func lecture() {
 		}
 		mutex.Lock()
 
-		// On traite uniquement les messages qui ne commencent pas par un 'A'
-		if rcvmsg[0] != uint8('A') {
+		// On traite uniquement les messages qui commencent par un 'C'
+		if rcvmsg[0] == uint8('C') {
+			rcvmsg = rcvmsg[1:]
 
 			// Demande de sauvegarde
 			if rcvmsg == "sauvegarde" {
@@ -106,7 +107,7 @@ func traiterMessagePrepost(rcvmsg string) {
 
 	if !jeSuisInitiateur {
 		utils.DisplayInfoSauvegarde(monNom, "Prepost", "Prepost transféré : "+rcvmsg)
-		go envoyerMessage(rcvmsg) // On fait suivre le message sur l'anneau
+		go envoyerMessage(toMessageForNet(rcvmsg)) // On fait suivre le message sur l'anneau
 		return
 	}
 
@@ -124,7 +125,7 @@ func traiterMessageEtat(rcvmsg string) {
 
 	if !jeSuisInitiateur {
 		utils.DisplayInfoSauvegarde(monNom, "Etat", "Transfert message etat : "+rcvmsg)
-		go envoyerMessage(rcvmsg)
+		go envoyerMessage(toMessageForNet(rcvmsg))
 		return
 	}
 
@@ -200,7 +201,7 @@ func finSauvegarde() {
 // APP BASE -> APP CONTROLE
 func traiterMessageSC(rcvmsg string) {
 	demande := utils.StringToMessageTypeSC(rcvmsg)
-	
+
 	var typeToString string
 	if demande == utils.Requete {
 		typeToString = "REQUÊTE d'accès à la section critique"
@@ -248,7 +249,7 @@ func traiterMessageLiberation(rcvmsg string) {
 
 	// Si le message ne vient pas de nous
 	if liberation.Estampille.Site != Site {
-		
+
 		// On met à jour l'horloge et le tableau de la file d'attente
 		HEM = utils.Recaler(liberation.Estampille.Horloge, HEM)
 		tabSC[liberation.Estampille.Site] = liberation
@@ -270,7 +271,7 @@ func traiterMessageAccuse(rcvmsg string) {
 
 	// Si l'Accuse n'est pas pour nous, on le transmet et on quitte la fonction
 	if Site != message.SiteCible {
-		envoiSequentiel(rcvmsg)
+		envoiSequentiel(toMessageForNet(rcvmsg))
 		return
 	}
 

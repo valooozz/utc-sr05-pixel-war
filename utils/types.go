@@ -77,3 +77,16 @@ type MessageAccuse struct {
 	SiteCible  int
 	Estampille Estampille
 }
+
+/////////////////////
+// Messages net
+/////////////////////
+
+type MessageNet struct {
+	Header         Header
+	MessageControl string
+}
+
+type Header struct {
+	ChampFictif string
+}

@@ -19,22 +19,22 @@ func envoiSequentiel(message string) {
 
 // Envoie un type Message pour les applis de contrôle
 func envoyerMessageControle(message utils.Message) {
-	go envoyerMessage(utils.MessageToString(message))
+	go envoyerMessage(toMessageForNet(utils.MessageToString(message)))
 }
 
 // Envoie un type MessageEtat pour les applis de contrôle
 func envoyerMessageEtat(messageEtat utils.MessageEtat) {
-	go envoyerMessage(utils.MessageEtatToString(messageEtat))
+	go envoyerMessage(toMessageForNet(utils.MessageEtatToString(messageEtat)))
 }
 
 // Envoie un type MessagePixel pour l'appli de base
 func envoyerMessageBase(messagePixel utils.MessagePixel) {
-	go envoyerMessage("A" + utils.MessagePixelToString(messagePixel))
+	go envoyerMessage("B" + utils.MessagePixelToString(messagePixel))
 }
 
 // Envoie un type MessageSauvegarde pour l'appli de base
 func envoyerMessageBaseSauvegarde(messageSauvegarde utils.MessageSauvegarde) {
-	go envoyerMessage("A" + utils.MessageSauvegardeToString(messageSauvegarde))
+	go envoyerMessage("B" + utils.MessageSauvegardeToString(messageSauvegarde))
 }
 
 /////////////////////
@@ -44,17 +44,26 @@ func envoyerMessageBaseSauvegarde(messageSauvegarde utils.MessageSauvegarde) {
 // Envoie un message de SC (Requete ou Liberation) pour l'anneau
 func envoyerMessageSCControle(msgSC utils.MessageExclusionMutuelle) {
 	msg := utils.MessageExclusionMutuelleToString(msgSC)
-	go envoyerMessage(msg)
+	go envoyerMessage(toMessageForNet(msg))
 }
 
 // Envoie un message Accuse pour l'anneau
 func envoyerMessageAccuse(msgAcc utils.MessageAccuse) {
 	msg := utils.MessageAccuseToString(msgAcc)
-	envoiSequentiel(msg)
+	envoiSequentiel(toMessageForNet(msg))
 }
 
 // Envoie un message SC pour l'application de base
 func envoyerMessageSCBase(msgSC utils.TypeSC) {
-	msg := "A" + utils.MessageTypeSCToString(msgSC)
+	msg := "B" + utils.MessageTypeSCToString(msgSC)
 	envoiSequentiel(msg)
+}
+
+/////////////////////
+// Communication avec l'app NET
+/////////////////////
+
+// Conversion en message destiné à l'app NET
+func toMessageForNet(msg string) string {
+	return "N" + msg
 }
