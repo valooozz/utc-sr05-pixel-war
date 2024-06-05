@@ -29,7 +29,7 @@ func lecture() {
 }
 
 func traiterMessageId(message string) {
-	utils.DisplayError(monNom, "traiterMessageId", "Reçu : "+message)
+	//utils.DisplayError(monNom, "traiterMessageId", "Reçu : "+message)
 	messageId := utils.StringToMessageId(message)
 	if messageId.Message == "" { //Cas d'un message arreté par l'application de control et renvoyé avec un id mais un message vide
 		delete(headers, strconv.Itoa(messageId.Id))
