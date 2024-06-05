@@ -9,6 +9,7 @@ import (
 // Pour l'instant, boucle sur l'entrée standard, lit et communique le résultat à la routine d'écriture
 func lecture() {
 	var rcvmsg string
+	var id = -1
 	for {
 		fmt.Scanln(&rcvmsg)
 		if rcvmsg == "" {
@@ -21,48 +22,54 @@ func lecture() {
 		if rcvmsg[0] == uint8('C') {
 			rcvmsg = rcvmsg[1:]
 
+			if utils.TrouverValeur(rcvmsg, "id") != "" { //Cas d'un message en provenance d'en bas
+				id, _ = strconv.Atoi(utils.TrouverValeur(rcvmsg, "id"))
+				rcvmsg = utils.TrouverValeur(rcvmsg, "message")
+			}
+
 			// Demande de sauvegarde
 			if rcvmsg == "sauvegarde" {
-				traiterDebutSauvegarde()
-
+				traiterDebutSauvegarde() //OK
 				// Traitement des messages de contrôle
 			} else if utils.TrouverValeur(rcvmsg, "couleur") != "" {
 				if utils.TrouverValeur(rcvmsg, "prepost") == "true" {
-					traiterMessagePrepost(rcvmsg)
+					traiterMessagePrepost(id, rcvmsg) //OK
 				} else {
-					traiterMessageControle(rcvmsg)
+					traiterMessageControle(id, rcvmsg) //OK
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
-				traiterMessageEtat(rcvmsg)
+				traiterMessageEtat(id, rcvmsg) //OK
 			} else if utils.TrouverValeur(rcvmsg, "siteCible") != "" {
-				traiterMessageAccuse(rcvmsg)
+				traiterMessageAccuse(id, rcvmsg) //OK
 			} else if utils.TrouverValeur(rcvmsg, "estampilleSite") != "" {
 				demande := utils.StringToMessageTypeSC(rcvmsg)
 				switch demande {
 				case utils.Requete:
-					traiterMessageRequete(rcvmsg)
+					traiterMessageRequete(id, rcvmsg) //OK
 				case utils.Liberation:
-					traiterMessageLiberation(rcvmsg)
+					traiterMessageLiberation(id, rcvmsg) //OK
 				default:
 					utils.DisplayError(monNom, "lecture", "Demande de SC non supportée")
 				}
 			} else if utils.TrouverValeur(rcvmsg, "typeSC") != "" {
-				traiterMessageSC(rcvmsg)
+				traiterMessageSC(rcvmsg) //OK
 			} else {
-				traiterMessagePixel(rcvmsg)
+				traiterMessagePixel(rcvmsg) //OK
 			}
 		}
 		mutex.Unlock()
+		id = -1
 	}
 }
 
 // TRAITEMENT DES CONTRÔLES NORMAUX : on extrait le pixel que l'on exploite dans l'app-base et on fait suivre l'information
 // et tout cela avec les bonnes informations mises à jour dans le message : horloge, couleur
-func traiterMessageControle(rcvmsg string) {
+func traiterMessageControle(id int, rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 
 	// On traite le message uniquement s'il ne vient pas de nous
 	if message.Nom == monNom {
+		go envoyerMessage(toMessageIdForNet(id, ""))
 		return
 	}
 
@@ -79,14 +86,14 @@ func traiterMessageControle(rcvmsg string) {
 
 		messageEtat := utils.MessageEtat{monEtatLocal}
 		utils.DisplayInfoSauvegarde(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
-		envoyerMessageEtat(messageEtat)
+		envoyerMessageEtat(-1, messageEtat)
 
 		// Réception d'un message prépost pas encore marqué comme prépost
 	} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
 		utils.DisplayInfoSauvegarde(monNom, "Controle", "Prepost détecté")
 		messagePrepost := message
 		messagePrepost.Prepost = true
-		envoyerMessageControle(messagePrepost)
+		envoyerMessageControle(-1, messagePrepost) //?
 	}
 
 	message.Couleur = maCouleur
@@ -99,15 +106,15 @@ func traiterMessageControle(rcvmsg string) {
 	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = utils.CopyHorlogeVectorielle(horlogeVectorielle)
 
-	envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
-	envoyerMessageBase(messagePixel) // Pour l'app de base
+	envoyerMessageControle(id, message) // Pour la prochaine app de contrôle de l'anneau
+	envoyerMessageBase(messagePixel)    // Pour l'app de base
 }
 
-func traiterMessagePrepost(rcvmsg string) {
+func traiterMessagePrepost(id int, rcvmsg string) {
 
 	if !jeSuisInitiateur {
 		utils.DisplayInfoSauvegarde(monNom, "Prepost", "Prepost transféré : "+rcvmsg)
-		go envoyerMessage(toMessageForNet(rcvmsg)) // On fait suivre le message sur l'anneau
+		go envoyerMessage(toMessageIdForNet(id, rcvmsg)) // On fait suivre le message sur l'anneau
 		return
 	}
 
@@ -121,11 +128,11 @@ func traiterMessagePrepost(rcvmsg string) {
 	}
 }
 
-func traiterMessageEtat(rcvmsg string) {
+func traiterMessageEtat(id int, rcvmsg string) {
 
 	if !jeSuisInitiateur {
 		utils.DisplayInfoSauvegarde(monNom, "Etat", "Transfert message etat : "+rcvmsg)
-		go envoyerMessage(toMessageForNet(rcvmsg))
+		go envoyerMessage(toMessageIdForNet(id, rcvmsg))
 		return
 	}
 
@@ -156,7 +163,7 @@ func traiterMessagePixel(rcvmsg string) {
 	monEtatLocal.Vectorielle = utils.CopyHorlogeVectorielle(horlogeVectorielle)
 
 	message := utils.Message{messagePixel, horlogeVectorielle, monNom, maCouleur, false}
-	envoyerMessageControle(message)
+	envoyerMessageControle(-1, message)
 }
 
 func traiterDebutSauvegarde() {
@@ -216,11 +223,11 @@ func traiterMessageSC(rcvmsg string) {
 	tabSC[Site] = message
 
 	// On transmet la Requete ou la Liberation sur l'anneau
-	envoyerMessageSCControle(message)
+	envoyerMessageSCControle(-1, message)
 }
 
 // APP CONTROL -> APP CONTROL
-func traiterMessageRequete(rcvmsg string) {
+func traiterMessageRequete(id int, rcvmsg string) {
 	demande := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
 	// Si le message ne vient pas de nous
@@ -231,8 +238,8 @@ func traiterMessageRequete(rcvmsg string) {
 		tabSC[demande.Estampille.Site] = demande
 
 		// On envoie un Accuse à l'émetteur de la Requete et on transmet celle-ci sur l'anneau
-		envoyerMessageAccuse(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
-		envoyerMessageSCControle(demande)
+		envoyerMessageAccuse(-1, utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
+		envoyerMessageSCControle(id, demande)
 
 		// On regarde si on peut accepter une SC chez nous
 	} else if utils.QuestionEntreeSC(Site, tabSC) {
@@ -244,7 +251,7 @@ func traiterMessageRequete(rcvmsg string) {
 }
 
 // APP CONTROL -> APP CONTROL
-func traiterMessageLiberation(rcvmsg string) {
+func traiterMessageLiberation(id int, rcvmsg string) {
 	liberation := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
 	// Si le message ne vient pas de nous
@@ -255,7 +262,7 @@ func traiterMessageLiberation(rcvmsg string) {
 		tabSC[liberation.Estampille.Site] = liberation
 
 		// On transmet le message sur l'anneau
-		envoyerMessageSCControle(liberation)
+		envoyerMessageSCControle(id, liberation)
 	}
 
 	// On regarde si on peut accepter une SC chez nous
@@ -266,12 +273,12 @@ func traiterMessageLiberation(rcvmsg string) {
 }
 
 // APP CONTROL -> APP CONTROL
-func traiterMessageAccuse(rcvmsg string) {
+func traiterMessageAccuse(id int, rcvmsg string) {
 	message := utils.StringToMessageAccuse(rcvmsg)
 
 	// Si l'Accuse n'est pas pour nous, on le transmet et on quitte la fonction
 	if Site != message.SiteCible {
-		envoiSequentiel(toMessageForNet(rcvmsg))
+		envoiSequentiel(toMessageIdForNet(id, rcvmsg))
 		return
 	}
 

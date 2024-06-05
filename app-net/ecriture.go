@@ -11,7 +11,7 @@ func envoyerMessage(message string) {
 	mutex.Unlock()
 }
 
-func envoyerControl(message string) {
+func envoyerMessageId(message string) {
 	msg := "C" + message
 	go envoyerMessage(msg)
 }

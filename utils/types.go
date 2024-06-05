@@ -82,11 +82,20 @@ type MessageAccuse struct {
 // Messages net
 /////////////////////
 
+type Header struct {
+	ChampFictif string
+}
+
 type MessageNet struct {
 	Header         Header
 	MessageControl string
 }
 
-type Header struct {
-	ChampFictif string
+/////////////////////
+// Messages id
+/////////////////////
+
+type MessageId struct {
+	Id      int
+	Message string
 }

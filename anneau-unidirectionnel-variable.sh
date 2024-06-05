@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NUM_SITES=4
+NUM_SITES=3
 
 # CRÉATION DES FIFOS/DES LIENS
 for i in $(seq 1 $NUM_SITES); do

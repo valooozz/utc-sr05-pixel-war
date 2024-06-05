@@ -256,3 +256,20 @@ func StringToMessageNet(str string) MessageNet {
 	message := MessageNet{header, messageControl}
 	return message
 }
+
+////////////////
+// MessageId
+////////////////
+
+func MessageIdToString(messageId MessageId) string {
+	sep1 := "$"
+	sep2 := "^"
+	return sep1 + sep2 + "id" + sep2 + strconv.Itoa(messageId.Id) + sep1 + sep2 + "message" + sep2 + messageId.Message
+}
+
+func StringToMessageId(str string) MessageId {
+	id, _ := strconv.Atoi(TrouverValeur(str, "id"))
+	message := TrouverValeur(str, "message")
+	messageId := MessageId{Id: id, Message: message}
+	return messageId
+}
