@@ -223,3 +223,31 @@ function addToLogNet(message) {
     logs.appendChild(d);
     logs.scroll(0, logs.scrollHeight);
 }
+
+
+
+// RECUPERATION AUTOMATIQUE DES PORTS
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const portB = urlParams.get('portB');
+    const portN = urlParams.get('portN');
+
+    const portBValue = parseInt(portB, 10);
+    const portNValue = parseInt(portN, 10);
+
+
+    if (!isNaN(portBValue)) {
+        document.getElementById('port').value = portBValue;
+    }
+
+    if (!isNaN(portNValue)) {
+        document.getElementById('portNet').value = portNValue;
+    }
+
+    console.log(portBValue)
+    console.log(portNValue)
+    setTimeout(function() {
+        document.getElementById('connecter').click();
+        document.getElementById('connecterNet').click();
+    }, 3000);
+};
