@@ -43,7 +43,8 @@ func traiterMessageId(message string) {
 		//Initialisation du header avec num du site courant, destination de la première règle de routage en destination, etc.
 		header = utils.Header{Origine: monNum, Destination: tableDeRoutage[0].Destination, Initiateur: monNum, Vecteur: vecteur}
 	} else {
-		header = headers[strconv.Itoa(siteIdCpt)]
+		header = headers[strconv.Itoa(messageId.Id)]
+		delete(headers, strconv.Itoa(messageId.Id))
 		header.Vecteur[monNum-1] = 1
 		header.Destination = utils.GetDestinationFor(header.Origine, tableDeRoutage)
 		header.Origine = monNum
