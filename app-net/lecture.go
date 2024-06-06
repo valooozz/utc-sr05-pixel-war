@@ -8,6 +8,7 @@ import (
 
 func lecture() {
 	var rcvmsg string
+	utils.DisplayError(monNom, "Ma table & monNum ", utils.TableDeRoutageToString(tableDeRoutage)+" "+strconv.Itoa(monNum))
 	for {
 		fmt.Scanln(&rcvmsg)
 		if rcvmsg == "" {
@@ -38,26 +39,43 @@ func traiterMessageId(message string) {
 	var header utils.Header
 	if messageId.Id == -1 {
 		//Il faut le wrapper pour la première fois
-		header = utils.Header{ChampFictif: "contenuFictif"}
+		vecteur := make([]int, N)
+		//Initialisation du header avec num du site courant, destination de la première règle de routage en destination, etc.
+		header = utils.Header{Origine: monNum, Destination: tableDeRoutage[0].Destination, Initiateur: monNum, Vecteur: vecteur}
 	} else {
 		header = headers[strconv.Itoa(siteIdCpt)]
+		header.Vecteur[monNum-1] = 1
+		header.Destination = utils.GetDestinationFor(header.Origine, tableDeRoutage)
+		header.Origine = monNum
 		//Il faut récupérer son header dans la map headers pour le wrapper avec (ne pas oublier de maj certains headers)
-		//MAJ AUTRES
 	}
 	messageNet := utils.MessageNet{Header: header, MessageControl: messageId.Message}
 	//utils.DisplayError(monNom, "traiterMessageId", "Envoi : "+utils.MessageNetToString(messageNet))
 	envoyerNet(utils.MessageNetToString(messageNet))
+	//utils.DisplayError(monNom, "traiterMessageId", "Envoyé : "+utils.MessageNetToString(messageNet))
 }
 
 func traiterMessageNet(message string) {
-	//utils.DisplayError(monNom, "traiterMessageNet", "Reçu : "+message)
-	//à l'avenir, tous les messages ne sont pas traités de cette manière mais traités ou non
 	messageNet := utils.StringToMessageNet(message)
 	header := messageNet.Header
-	siteIdCpt++
-	headers[strconv.Itoa(siteIdCpt)] = header
-	messageControl := messageNet.MessageControl
-	//Ici on vient wrapper le message dans une capsule dédiée avec un id
-	messageId := utils.MessageId{Id: siteIdCpt, Message: messageControl}
-	envoyerMessageId(utils.MessageIdToString(messageId)) //envoi à l'app de control du site courant
+	if header.Destination == monNum {
+		//utils.DisplayError(monNom, "traiterMessageNet", "Reçu : "+message)
+		//if header.Vecteur[monNum-1] == 1 || (header.Initiateur == monNum && !utils.IlNeRestePlusQue(header.Initiateur, header.Vecteur)) || header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
+		if header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
+			headerForward := header
+			headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
+			headerForward.Origine = monNum
+			messageNet.Header = headerForward
+			envoyerNet(utils.MessageNetToString(messageNet))
+			//utils.DisplayError(monNom, "traiterMessageNet", "Envoyé : "+utils.MessageNetToString(messageNet))
+		} else { //Première réception : on prend en charge le message
+			siteIdCpt++
+			headers[strconv.Itoa(siteIdCpt)] = header
+			messageControl := messageNet.MessageControl
+			//Ici on vient wrapper le message dans une capsule dédiée avec un id
+			messageId := utils.MessageId{Id: siteIdCpt, Message: messageControl}
+			envoyerMessageId(utils.MessageIdToString(messageId)) //envoi à l'app de control du site courant
+			//utils.DisplayError(monNom, "traiterMessageNet", "IDENVOYÉ : "+utils.MessageIdToString(messageId))
+		}
+	}
 }

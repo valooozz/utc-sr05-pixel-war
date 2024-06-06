@@ -241,3 +241,27 @@ func replaceOrAddPixel(carte []MessagePixel, newPixel MessagePixel) []MessagePix
 
 	return carte
 }
+
+func GetDestinationFor(source int, routage TableDeRoutage) int {
+	for _, route := range routage {
+		if route.Origine == source {
+			return route.Destination
+		}
+	}
+	return -1
+}
+
+func IlNeRestePlusQue(init int, vect []int) bool {
+	if vect[init-1] == 1 {
+		DisplayError("Utils", "IlNeRestePlusQue()", "L'initiateur n'est même pas faux")
+		return false
+	}
+	for i, v := range vect {
+		if i != init-1 { //On ne traite que les cases qui ne concernent pas l'initiateur car l'initiateur est traité en haut
+			if v != 1 {
+				return false
+			}
+		}
+	}
+	return true
+}

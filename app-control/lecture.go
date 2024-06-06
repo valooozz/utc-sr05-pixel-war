@@ -21,6 +21,7 @@ func lecture() {
 		// On traite uniquement les messages qui commencent par un 'C'
 		if rcvmsg[0] == uint8('C') {
 			rcvmsg = rcvmsg[1:]
+			//utils.DisplayWarning(monNom, "Reception", "Je vais traiter ceci :"+rcvmsg)
 
 			if utils.TrouverValeur(rcvmsg, "id") != "" { //Cas d'un message en provenance d'en bas
 				id, _ = strconv.Atoi(utils.TrouverValeur(rcvmsg, "id"))
@@ -42,6 +43,7 @@ func lecture() {
 			} else if utils.TrouverValeur(rcvmsg, "siteCible") != "" {
 				traiterMessageAccuse(id, rcvmsg) //OK
 			} else if utils.TrouverValeur(rcvmsg, "estampilleSite") != "" {
+				//utils.DisplayError(monNom, "Reception", "J'ai reçu :"+rcvmsg)
 				demande := utils.StringToMessageTypeSC(rcvmsg)
 				switch demande {
 				case utils.Requete:
@@ -239,6 +241,7 @@ func traiterMessageRequete(id int, rcvmsg string) {
 
 		// On envoie un Accuse à l'émetteur de la Requete et on transmet celle-ci sur l'anneau
 		envoyerMessageAccuse(-1, utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
+		//utils.DisplayError(monNom, "Reception", "J'envoi cet accusé :"+utils.MessageAccuseToString(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}}))
 		envoyerMessageSCControle(id, demande)
 
 		// On regarde si on peut accepter une SC chez nous

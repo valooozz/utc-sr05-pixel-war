@@ -83,7 +83,10 @@ type MessageAccuse struct {
 /////////////////////
 
 type Header struct {
-	ChampFictif string
+	Origine     int
+	Destination int
+	Initiateur  int
+	Vecteur     []int
 }
 
 type MessageNet struct {
@@ -99,3 +102,14 @@ type MessageId struct {
 	Id      int
 	Message string
 }
+
+/////////////////////
+// Routage
+/////////////////////
+
+type Route struct {
+	Origine     int
+	Destination int
+}
+
+type TableDeRoutage []Route

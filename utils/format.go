@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -231,15 +232,43 @@ func StringToMessageAccuse(str string) MessageAccuse {
 // MessageNet
 ////////////////
 
+func VecteurToString(vect []int) string {
+	var str string
+	str += "["
+	for i, val := range vect {
+		if i > 0 {
+			str += "_"
+		}
+		str += strconv.Itoa(val)
+	}
+	str += "]"
+	return str
+}
+
+func StringToVecteur(s string) []int {
+	s = strings.Trim(s, "[]")
+	valuesStr := strings.Split(s, "_")
+	var vect []int
+	for _, valStr := range valuesStr {
+		val, _ := strconv.Atoi(valStr)
+		vect = append(vect, val)
+	}
+	return vect
+}
+
 func HeaderToString(header Header) string {
 	sep1 := "$"
 	sep2 := "^"
-	return sep1 + sep2 + "champFictif" + sep2 + header.ChampFictif
+	return sep1 + sep2 + "origine" + sep2 + strconv.Itoa(header.Origine) + sep1 + sep2 + "destination" + sep2 + strconv.Itoa(header.Destination) +
+		sep1 + sep2 + "initiateur" + sep2 + strconv.Itoa(header.Initiateur) + sep1 + sep2 + "vecteur" + sep2 + VecteurToString(header.Vecteur)
 }
 
 func StringToHeader(str string) Header {
-	champFictif := TrouverValeur(str, "champFictif")
-	header := Header{ChampFictif: champFictif}
+	o, _ := strconv.Atoi(TrouverValeur(str, "origine"))
+	d, _ := strconv.Atoi(TrouverValeur(str, "destination"))
+	i, _ := strconv.Atoi(TrouverValeur(str, "initiateur"))
+	v := StringToVecteur(TrouverValeur(str, "vecteur"))
+	header := Header{o, d, i, v}
 	return header
 }
 
@@ -272,4 +301,34 @@ func StringToMessageId(str string) MessageId {
 	message := TrouverValeur(str, "message")
 	messageId := MessageId{Id: id, Message: message}
 	return messageId
+}
+
+/////////////////////
+// Routage
+/////////////////////
+
+func StringToTableDeRoutage(s string) TableDeRoutage {
+	s = strings.Trim(s, "[]") // Enlever les crochets
+	routesStr := strings.Split(s, ";")
+	var tdr TableDeRoutage
+	for _, routeStr := range routesStr {
+		fields := strings.Split(routeStr, ",")
+		origine, _ := strconv.Atoi(fields[0])
+		destination, _ := strconv.Atoi(fields[1])
+		tdr = append(tdr, Route{Origine: origine, Destination: destination})
+	}
+	return tdr
+}
+
+func TableDeRoutageToString(tdr TableDeRoutage) string {
+	var sb strings.Builder
+	sb.WriteString("[")
+	for i, route := range tdr {
+		if i > 0 {
+			sb.WriteString(";")
+		}
+		sb.WriteString(fmt.Sprintf("%d,%d", route.Origine, route.Destination))
+	}
+	sb.WriteString("]")
+	return sb.String()
 }

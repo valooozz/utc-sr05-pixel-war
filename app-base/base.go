@@ -38,6 +38,12 @@ func sendPeriodic(nbMessages int, slower bool) {
 			if monNom[0:2] == "A2" {
 				time.Sleep(time.Duration(1) * time.Second)
 			}
+			if monNom[0:2] == "A3" {
+				time.Sleep(time.Duration(2) * time.Second)
+			}
+			if monNom[0:2] == "A4" {
+				time.Sleep(time.Duration(500) * time.Millisecond)
+			}
 		}
 		// Variable val permet d'identifier le site initiateur du message
 		envoyerPixel(i, i, 255, val, 0)
@@ -94,7 +100,7 @@ func lancementModeAutomatique() {
 	}
 
 	//On lance un envoi automatique périodique sur la diagonale sur les 2 premiers/seuls sites (ils doivent exister sous ce nom biensûr)
-	if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
+	if monNom[0:2] == "A1" || monNom[0:2] == "A2" || monNom[0:2] == "A3" || monNom[0:2] == "A4" {
 		go sendPeriodic(20, true)
 	}
 

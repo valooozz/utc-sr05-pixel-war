@@ -6,17 +6,17 @@ import (
 
 // Envoi une chaine de caractères sur la sortie standard
 func envoyerMessage(message string) {
-	mutex.Lock()
+	//mutex.Lock()
 	fmt.Println(message)
-	mutex.Unlock()
+	//mutex.Unlock()
 }
 
 func envoyerMessageId(message string) {
 	msg := "C" + message
-	go envoyerMessage(msg)
+	envoyerMessage(msg)
 }
 
 func envoyerNet(message string) {
 	msg := "N" + message
-	go envoyerMessage(msg)
+	envoyerMessage(msg)
 }
