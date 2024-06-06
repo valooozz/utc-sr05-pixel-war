@@ -57,7 +57,7 @@ func traiterMessageInterface(msg []byte) {
 	} else {
 		demandeSC()
 		wsSend(message)
-		envoyerMessage(message)
+		envoiSequentiel(message)
 		relacherSC()
 	}
 }

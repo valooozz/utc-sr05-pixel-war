@@ -53,6 +53,7 @@ func traiterMessageId(message string) {
 	messageNet := utils.MessageNet{Header: header, MessageControl: messageId.Message}
 	//utils.DisplayError(monNom, "traiterMessageId", "Envoi : "+utils.MessageNetToString(messageNet))
 	envoyerNet(utils.MessageNetToString(messageNet))
+	preparateur("E", messageNet) //log au niveau du client
 	//utils.DisplayError(monNom, "traiterMessageId", "Envoyé : "+utils.MessageNetToString(messageNet))
 }
 
@@ -60,6 +61,7 @@ func traiterMessageNet(message string) {
 	messageNet := utils.StringToMessageNet(message)
 	header := messageNet.Header
 	if header.Destination == monNum {
+		preparateur("R", messageNet) //log au niveau du client
 		//utils.DisplayError(monNom, "traiterMessageNet", "Reçu : "+message)
 		//if header.Vecteur[monNum-1] == 1 || (header.Initiateur == monNum && !utils.IlNeRestePlusQue(header.Initiateur, header.Vecteur)) || header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
 		if header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
@@ -68,6 +70,7 @@ func traiterMessageNet(message string) {
 			headerForward.Origine = monNum
 			messageNet.Header = headerForward
 			envoyerNet(utils.MessageNetToString(messageNet))
+			preparateur("E", messageNet) //log au niveau du client
 			//utils.DisplayError(monNom, "traiterMessageNet", "Envoyé : "+utils.MessageNetToString(messageNet))
 		} else { //Première réception : on prend en charge le message
 			siteIdCpt++

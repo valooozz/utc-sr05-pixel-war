@@ -37,7 +37,7 @@ form p {
     gap: 10px;
 }
 
-button {
+.button {
     text-decoration: none;
     padding: 10px 20px;
     border: none;
@@ -48,7 +48,7 @@ button {
     font-size: 16px;
 }
 
-button:hover {
+.button:hover {
     background-color: #e36c09;
 }
 
@@ -67,6 +67,36 @@ input {
     border: 1px solid #fff;
     padding: 10px;
     width: 100%;
+}
+
+#logsNet {
+    max-height: 10vh;
+    overflow-y: scroll;
+    background-color: #333;
+    border: 1px solid #fff;
+    padding: 10px;
+    width: 100%;
+}
+
+.buttonNet {
+    text-decoration: none;
+    padding: 10px 20px;
+    border: none;
+    background-color: #ff0000; /* Rouge */
+    border-radius: 21px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.buttonNet:hover {
+    background-color: #cc0000; /* Rouge foncé */
+}
+
+.hrStyle {
+    border: none;
+    border-top: 2px solid red;
+    margin: 20px 0;
 }
 
 canvas {

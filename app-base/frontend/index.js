@@ -4,6 +4,10 @@ import drawPixel from "./drawPixel.js"
 import onClickColor from "./events/onClickColor.js";
 import onClickPixel from "./events/onClickPixel.js";
 
+
+//PARTIE APP BASE
+
+
 var ws;
 const pixelSize = 10;
 const canvasHeight = 600;
@@ -153,6 +157,67 @@ document.getElementById("envoyer").onclick = function(evt) {
 
 function addToLog(message) {
     var logs = document.getElementById("logs");
+    var d = document.createElement("div");
+    d.textContent = message;
+    logs.appendChild(d);
+    logs.scroll(0, logs.scrollHeight);
+}
+
+
+
+
+
+
+
+
+//PARTIE APP NET
+
+
+
+var ws2;
+
+document.getElementById("connecterNet").onclick = function(evt) {
+    if (ws2) {
+        return false;
+    }
+
+    var host = document.getElementById("hostNet").value;
+    var port = document.getElementById("portNet").value;
+
+    addToLogNet("Tentative de connexion")
+    addToLogNet("host = " + host + ", port = " + port)
+    ws2 = new WebSocket("ws://"+host+":"+port+"/ws");
+
+    ws2.onopen = function(evt) {
+        addToLogNet("Websocket ouverte");
+    }
+
+    ws2.onclose = function(evt) {
+        addToLogNet("Websocket fermée");
+        ws2 = null;
+    }
+
+    ws2.onmessage = function(evt) {
+        addToLogNet(evt.data);
+    }
+
+    ws2.onerror = function(evt) {
+        addToLog("Erreur: " + evt.data);
+    }
+    return false;
+}
+
+document.getElementById("fermerNet").onclick = function(evt) {
+    if (!ws2) {
+        return false;
+    }
+    ws2.close();
+    return false;
+}
+
+
+function addToLogNet(message) {
+    var logs = document.getElementById("logsNet");
     var d = document.createElement("div");
     d.textContent = message;
     logs.appendChild(d);

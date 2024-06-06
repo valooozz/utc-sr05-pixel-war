@@ -13,6 +13,8 @@ var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "controle", "nom")
 var pRoutage = flag.String("r", "", "routage")
 var pNbsites = flag.Int("nbsites", 3, "nom")
+var pPort = flag.Int("port", 4444, "n° de port")
+var pAddr = flag.String("addr", "localhost", "nom/adresse machine")
 
 var N int         // Nombre de sites dans le réseau
 var monNom string // Nom du site (option -n + pid)
@@ -33,8 +35,11 @@ func main() {
 		tableDeRoutage = append(tableDeRoutage, route)
 	}
 
+	port := *pPort
+	addr := *pAddr
 	// On lance une go-routine pour écouter les messages entrants sur l'entrée standard
 	go lecture()
+	launchServer(strconv.Itoa(port), addr)
 	for {
 		time.Sleep(time.Duration(60) * time.Second)
 	} // Pour attendre la fin des goroutines...
