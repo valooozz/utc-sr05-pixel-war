@@ -87,3 +87,10 @@ func envoyerVoisinRaccord(cible int) {
 
 	envoyerNet(str)
 }
+
+func envoyerMessageBlocage(blocage utils.CouleurBlocage, cible int) {
+	messageBlocage := utils.MessageBlocage{monNum, blocage, cible}
+	str := utils.MessageBlocageToString(messageBlocage)
+
+	envoyerNet(str)
+}

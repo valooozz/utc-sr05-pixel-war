@@ -148,3 +148,16 @@ type Demande struct {
 	Site int
 	Info int
 }
+
+type CouleurBlocage bool
+
+const (
+	Gris CouleurBlocage = false
+	Noir CouleurBlocage = true
+)
+
+type MessageBlocage struct {
+	Site    int
+	Blocage CouleurBlocage
+	Cible   int
+}
