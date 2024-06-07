@@ -101,7 +101,43 @@ func lecture() {
 
 		mutex.Unlock()
 	}
-	//transmettreSeulement(rcvmsg)
+
+	transmission(rcvmsg)
+}
+
+func transmission(rcvmsg string) {
+	fmt.Println(rcvmsg)
+
+	for monEtat == "inactif" {
+		fmt.Scanln(&rcvmsg)
+
+		if rcvmsg[0] == uint8('N') {
+			message := rcvmsg[1:]
+
+			// Si c'est un message pour l'anneau logique, on le transmet en gardant
+			if utils.TrouverValeur(message, "header") != "" {
+				messageNet := utils.StringToMessageNet(message)
+				header := messageNet.Header
+				headerForward := header
+				headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
+				headerForward.Origine = monNum
+				messageNet.Header = headerForward
+				envoyerNet(utils.MessageNetToString(messageNet))
+				preparateur("E", messageNet) //log au niveau du client
+
+				// Fonctionnement si jamais on change la table de routage des sites encore actifs :
+				/*messageNet := utils.StringToMessageNet(message)
+				header := messageNet.Header
+				if header.Destination == utils.GetDestinationFor(header.Origine, tableDeRoutage) {
+					fmt.Println(rcvmsg)
+				}*/
+
+				// Si c'est un message pour les apps net, et qu'on a plus (+) d'un voisin (évite quelques cas de ping-pong infini)
+			} else if nbVoisinsAttendus > 1 {
+				fmt.Println(rcvmsg)
+			}
+		}
+	}
 }
 
 ///////////////////////////////////////
@@ -301,12 +337,10 @@ func traiterAcceptationRaccord(rcvmsg string) {
 		monEtat = "inactif"
 
 		envoyerSignalRaccord(-1, monNum)
-
-		//go transmission()
 	}
 }
 
-func traiterDepartRaccord() {
+func traiterDepartRaccord() { // JE CROIS QU'ELLE SERT A RIEN CETTE FONCTION
 	envoyerMessageVert(demande.Info, monNum)
 	reinitialiserVague(demande.Info)
 }
@@ -323,6 +357,23 @@ func traiterSignalRaccord(rcvmsg string) {
 	if messageRaccord.Info > 0 { // Si un site a rejoint, on lui signale notre existence
 		envoyerVoisinRaccord(messageRaccord.Site)
 	}
+
+	// Si on veut changer la table de routage des sites actifs lors du départ d'un site
+	// Il faut que le site qui s'en va partage sa table de routage puis qu'on la traite ici :
+	/*var newDestination int
+	for _, route := range tableDuPartant {
+		if route.Origine == monNum {
+			newDestination = route.Destination
+			break
+		}
+	}
+	for _, route := range tableDeRoutage {
+		if route.Destination == messageRaccord.Site {
+			route.Destination = newDestination
+			break
+		}
+	}*/
+
 }
 
 func traiterVoisinRaccord() {
