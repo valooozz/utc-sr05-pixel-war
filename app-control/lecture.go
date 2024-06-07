@@ -12,23 +12,42 @@ func lecture() {
 	var id = -1
 	for {
 		fmt.Scanln(&rcvmsg)
+		//utils.DisplayError(monNom, "lecture", "Message reçu "+rcvmsg)
+
 		if rcvmsg == "" {
 			utils.DisplayError(monNom, "lecture", "Message vide reçu -> Fin du processus")
+			break
+		}
+
+		// Mise à jour de N
+		if rcvmsg[0:3] == "CN=" {
+			N, _ = strconv.Atoi(rcvmsg[3:])
+			utils.DisplayWarning(monNom, "lecture", "Je mets mon N à "+strconv.Itoa(N))
+			if N == Site+1 { //Cas du petit nouveau : on réalloue tout le tableau
+				tabSC = make([]utils.MessageExclusionMutuelle, N)
+				for i := 0; i < len(tabSC); i++ {
+					tabSC[i].Type = utils.Liberation
+					tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
+				}
+			} else { //Cas d'un ancien : on réalloue une partie
+				tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}})
+			}
 			continue
 		}
+
 		mutex.Lock()
 
 		// On traite uniquement les messages qui commencent par un 'C'
 		if rcvmsg[0] == uint8('C') {
 			rcvmsg = rcvmsg[1:]
 			//utils.DisplayWarning(monNom, "Reception", "Je vais traiter ceci :"+rcvmsg)
+			//utils.DisplayInfoSauvegarde("JE SUIS LÀ", "", rcvmsg)
 
 			if utils.TrouverValeur(rcvmsg, "id") != "" { //Cas d'un message en provenance d'en bas
 				id, _ = strconv.Atoi(utils.TrouverValeur(rcvmsg, "id"))
 				rcvmsg = utils.TrouverValeur(rcvmsg, "message")
 			}
 
-			// Demande de sauvegarde
 			if rcvmsg == "sauvegarde" {
 				traiterDebutSauvegarde() //OK
 				// Traitement des messages de contrôle

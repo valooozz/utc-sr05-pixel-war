@@ -249,5 +249,5 @@ window.onload = function() {
     setTimeout(function() {
         document.getElementById('connecter').click();
         document.getElementById('connecterNet').click();
-    }, 3000);
+    }, 5000);
 };

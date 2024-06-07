@@ -6,15 +6,41 @@ import (
 	"utils"
 )
 
+func attenteRaccordement() {
+	var rcvmsg string
+
+	for monEtat != "actif" {
+		fmt.Scanln(&rcvmsg)
+		message := rcvmsg[1:]
+
+		if rcvmsg == "" {
+			utils.DisplayError(monNom, "lecture", "Message vide reçu")
+			break
+		}
+		mutex.Lock()
+
+		//utils.DisplayWarning(monNom, "attente", "Message reçu : "+rcvmsg)
+
+		if utils.TrouverValeur(message, "type") == "acceptation" {
+			cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
+			if cible == monNum {
+				traiterAcceptationRaccord(message)
+			}
+		}
+
+		mutex.Unlock()
+	}
+}
+
 func lecture() {
 	var rcvmsg string
 
 	utils.DisplayError(monNom, "Ma table & monNum ", utils.TableDeRoutageToString(tableDeRoutage)+" "+strconv.Itoa(monNum))
 	for monEtat != "inactif" {
+		//time.Sleep(100 * time.Millisecond)
 		fmt.Scanln(&rcvmsg)
 
 		if monEtat == "inactif" {
-			go envoyerMessage(rcvmsg)
 			break
 		}
 
@@ -26,55 +52,61 @@ func lecture() {
 		mutex.Lock()
 		//time.Sleep(time.Duration(1) * time.Second)
 
-		utils.DisplayWarning(monNom, "lecture", "Message reçu : "+rcvmsg)
+		//utils.DisplayWarning(monNom, "lecture", "Message reçu : "+rcvmsg)
 
 		if rcvmsg[0] == uint8('N') {
 			message := rcvmsg[1:]
 
 			if utils.TrouverValeur(message, "header") != "" {
+				//utils.DisplayWarning(monNom, "lecture", "Message reçu : "+message)
 				traiterMessageNet(message)
 			} else if utils.TrouverValeur(message, "id") != "" { //Cas de la réception d'un message de l'app-control associée
 				traiterMessageId(message)
-			} else if utils.TrouverValeur(rcvmsg, "type") == "demande" {
-				cible, _ := strconv.Atoi(utils.TrouverValeur(rcvmsg, "cible"))
+			} else if utils.TrouverValeur(message, "type") == "demande" {
+				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 				if cible == monNum {
-					traiterDemandeRaccord(rcvmsg)
+					traiterDemandeRaccord(message)
 				}
-			} else if utils.TrouverValeur(rcvmsg, "type") == "acceptation" {
-				cible, _ := strconv.Atoi(utils.TrouverValeur(rcvmsg, "cible"))
+			} else if utils.TrouverValeur(message, "type") == "acceptation" {
+				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 				if cible == monNum && monEtat == "depart" {
-					traiterAcceptationRaccord(rcvmsg)
+					traiterAcceptationRaccord(message)
 				}
-			} else if utils.TrouverValeur(rcvmsg, "type") == "depart" {
+			} else if utils.TrouverValeur(message, "type") == "depart" {
 				traiterDepartRaccord()
-			} else if utils.TrouverValeur(rcvmsg, "type") == "signal" {
-				traiterSignalRaccord(rcvmsg)
-			} else if utils.TrouverValeur(rcvmsg, "type") == "voisin" {
-				cible, _ := strconv.Atoi(utils.TrouverValeur(rcvmsg, "cible"))
+			} else if utils.TrouverValeur(message, "type") == "signal" {
+				traiterSignalRaccord(message)
+			} else if utils.TrouverValeur(message, "type") == "voisin" {
+				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 				if cible == monNum {
 					traiterVoisinRaccord()
 				}
-			} else if utils.TrouverValeur(rcvmsg, "coloration") == "1" {
-				cible, _ := strconv.Atoi(utils.TrouverValeur(rcvmsg, "cible"))
+			} else if utils.TrouverValeur(message, "coloration") == "1" {
+				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 				if cible != monNum { // On traite un message bleu que si on n'est pas la cible (du coup le concept de cible est inversé, c'est pour gérer le fait qu'un message bleu est souvent envoyé à tous les voisins sauf un)
-					traiterMessageBleu(rcvmsg)
+					traiterMessageBleu(message)
 				}
-			} else if utils.TrouverValeur(rcvmsg, "coloration") == "2" {
-				cible, _ := strconv.Atoi(utils.TrouverValeur(rcvmsg, "cible"))
+			} else if utils.TrouverValeur(message, "coloration") == "2" {
+				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 				if cible == monNum { // On traite un message rouge que si on est la cible
-					traiterMessageRouge(rcvmsg)
+					traiterMessageRouge(message)
 				}
-			} else if utils.TrouverValeur(rcvmsg, "coloration") == "3" {
-				cible, _ := strconv.Atoi(utils.TrouverValeur(rcvmsg, "cible"))
+			} else if utils.TrouverValeur(message, "coloration") == "3" {
+				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 				if cible != monNum { // On traite un message vert que si on n'est pas la cible
-					traiterMessageVert(rcvmsg)
+					traiterMessageVert(message)
 				}
 			}
 		}
 
 		mutex.Unlock()
 	}
+	//transmettreSeulement(rcvmsg)
 }
+
+///////////////////////////////////////
+// Diffusion sur l'anneau logique
+///////////////////////////////////////
 
 func traiterMessageId(message string) {
 	//utils.utils.DisplayError(monNom, "traiterMessageId", "Reçu : "+message)
@@ -208,8 +240,17 @@ func traiterFinElection() {
 
 	envoyerAcceptationRaccord(demande.Site)
 
+	majRoutage(demande.Site)
+
 	envoyerMessageVert(demande.Info, monNum)
 	reinitialiserVague(demande.Info)
+}
+
+func majRoutage(nouveauSite int) {
+	tmp := tableDeRoutage[0].Destination
+	tableDeRoutage[0].Destination = nouveauSite
+	tableDeRoutage = append(tableDeRoutage, utils.Route{nouveauSite, tmp})
+	utils.DisplayError(monNom, "majRoutage", utils.TableDeRoutageToString(tableDeRoutage))
 }
 
 func reinitialiserVague(info int) {
@@ -217,6 +258,7 @@ func reinitialiserVague(info int) {
 	monParent = 0
 	nbVoisinsAttendus = *pVoisins
 	N = N + info
+	envoyerSpecialControl("N=" + strconv.Itoa(N))
 	monElu = N * 100
 	demande.Site = 0
 	demande.Info = 0
@@ -248,6 +290,7 @@ func traiterAcceptationRaccord(rcvmsg string) {
 		monEtat = "actif"
 		N = messageRaccord.Info
 		utils.DisplayInfoSauvegarde(monNom, "traiter", "N="+strconv.Itoa(N))
+		envoyerSpecialControl("N=" + strconv.Itoa(N))
 
 		go lecture()
 

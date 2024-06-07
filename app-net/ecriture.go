@@ -23,6 +23,11 @@ func envoyerNet(message string) {
 	envoyerMessage(msg)
 }
 
+func envoyerSpecialControl(message string) {
+	msg := "C" + message
+	envoyerMessage(msg)
+}
+
 //////////////
 // Election
 //////////////
@@ -31,21 +36,21 @@ func envoyerMessageBleu(cible int) {
 	messageVague := utils.MessageVague{monNum, utils.ColorationVague(1), monElu, cible}
 	str := utils.MessageVagueToString(messageVague)
 
-	go envoyerMessage(str)
+	envoyerNet(str)
 }
 
 func envoyerMessageRouge(cible int) {
 	messageVague := utils.MessageVague{monNum, utils.ColorationVague(2), monElu, cible}
 	str := utils.MessageVagueToString(messageVague)
 
-	go envoyerMessage(str)
+	envoyerNet(str)
 }
 
 func envoyerMessageVert(info int, cible int) {
 	messageVague := utils.MessageVague{monNum, utils.ColorationVague(3), info, cible}
 	str := utils.MessageVagueToString(messageVague)
 
-	go envoyerMessage(str)
+	envoyerNet(str)
 }
 
 ////////////////
@@ -57,7 +62,7 @@ func envoyerDemandeRaccord(info int, cible int) {
 	str := utils.MessageRaccordToString(messageRaccord)
 
 	for monEtat == "attente" || monEtat == "depart" {
-		go envoyerMessage(str)
+		envoyerNet(str)
 		time.Sleep(time.Duration(5) * time.Second)
 	}
 }
@@ -66,19 +71,19 @@ func envoyerAcceptationRaccord(cible int) {
 	messageRaccord := utils.MessageRaccord{monNum, "acceptation", N + 1, cible}
 	str := utils.MessageRaccordToString(messageRaccord)
 
-	go envoyerMessage(str)
+	envoyerNet(str)
 }
 
 func envoyerSignalRaccord(info int, cible int) {
 	messageRaccord := utils.MessageRaccord{monNum, "signal", info, cible}
 	str := utils.MessageRaccordToString(messageRaccord)
 
-	go envoyerMessage(str)
+	envoyerNet(str)
 }
 
 func envoyerVoisinRaccord(cible int) {
 	messageRaccord := utils.MessageRaccord{monNum, "voisin", 0, cible}
 	str := utils.MessageRaccordToString(messageRaccord)
 
-	go envoyerMessage(str)
+	envoyerNet(str)
 }

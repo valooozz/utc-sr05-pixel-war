@@ -11,6 +11,7 @@ func envoyerMessage(message string) {
 	mutex.Lock()
 	msg := "C" + message
 	fmt.Println(msg)
+	utils.DisplayInfo(monNom, "J'envoie ", msg)
 	mutex.Unlock()
 }
 

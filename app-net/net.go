@@ -26,7 +26,7 @@ var tableDeRoutage = make(utils.TableDeRoutage, 0)
 var monEtat string
 var monParent = 0
 var nbVoisinsAttendus int
-var monElu = N * 100
+var monElu int
 var demande utils.Demande
 
 var pVoisins = flag.Int("v", 0, "nombre de voisins")
@@ -35,9 +35,17 @@ var pCible = flag.Int("c", 0, "site cible de la demande de raccord")
 var pTimer = flag.Int("t", 0, "timer avant de rejoindre le réseau")
 var pQuit = flag.Int("q", -1, "timer avant de quitter le réseau")
 
+func quitTimer(timer int, cible int) {
+	time.Sleep(time.Duration(timer) * time.Second)
+	monEtat = "depart"
+
+	go envoyerDemandeRaccord(-1, cible)
+}
+
 func main() {
 	flag.Parse()
 	N = *pNbsites
+	monElu = N * 100
 	monNomBrut := *pNom
 	monNom = monNomBrut + "-" + strconv.Itoa(os.Getpid())
 	monNum, _ = strconv.Atoi(monNomBrut[1:])
@@ -53,7 +61,22 @@ func main() {
 	port := *pPort
 	addr := *pAddr
 	// On lance une go-routine pour écouter les messages entrants sur l'entrée standard
-	go lecture()
+
+	if monEtat == "actif" {
+		go lecture()
+
+		if *pQuit >= 0 {
+			go quitTimer(*pQuit, *pCible)
+		}
+
+	} else if monEtat == "inactif" {
+		go attenteRaccordement()
+		time.Sleep(time.Duration(*pTimer) * time.Second)
+
+		monEtat = "attente"
+		go envoyerDemandeRaccord(1, *pCible)
+	}
+
 	launchServer(strconv.Itoa(port), addr)
 	for {
 		time.Sleep(time.Duration(60) * time.Second)

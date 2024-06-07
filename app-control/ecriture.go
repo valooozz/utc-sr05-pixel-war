@@ -8,12 +8,14 @@ import (
 // Envoi une chaine de caractères sur la sortie standard
 func envoyerMessage(message string) {
 	mutex.Lock()
+	//utils.DisplayError(monNom, "envoyer", message)
 	fmt.Println(message)
 	mutex.Unlock()
 }
 
 // Utile lorsque l'on doit conserver un ordre précis dans les messages (ce que ne font pas les go-routines)
 func envoiSequentiel(message string) {
+	//utils.DisplayError(monNom, "envoyer", message)
 	fmt.Println(message)
 }
 
