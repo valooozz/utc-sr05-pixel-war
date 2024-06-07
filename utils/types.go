@@ -113,3 +113,38 @@ type Route struct {
 }
 
 type TableDeRoutage []Route
+
+////////////////
+// Election
+////////////////
+
+type ColorationVague int
+
+const (
+	Bleu  ColorationVague = 1
+	Rouge ColorationVague = 2
+	Vert  ColorationVague = 3
+)
+
+type MessageVague struct {
+	Site       int
+	Coloration ColorationVague
+	Info       int
+	Cible      int
+}
+
+/////////////////
+// Raccordement
+/////////////////
+
+type MessageRaccord struct {
+	Site  int
+	Type  string
+	Info  int
+	Cible int
+}
+
+type Demande struct {
+	Site int
+	Info int
+}

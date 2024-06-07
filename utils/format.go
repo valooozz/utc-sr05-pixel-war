@@ -332,3 +332,45 @@ func TableDeRoutageToString(tdr TableDeRoutage) string {
 	sb.WriteString("]")
 	return sb.String()
 }
+
+////////////
+// Election
+////////////
+
+func MessageVagueToString(messageVague MessageVague) string {
+	return sepM + sepP + "site" + sepP + strconv.Itoa(messageVague.Site) +
+		sepM + sepP + "coloration" + sepP + strconv.Itoa(int(messageVague.Coloration)) +
+		sepM + sepP + "info" + sepP + strconv.Itoa(messageVague.Info) +
+		sepM + sepP + "cible" + sepP + strconv.Itoa(messageVague.Cible)
+}
+
+func StringToMessageVague(str string) MessageVague {
+	site, _ := strconv.Atoi(TrouverValeur(str, "site"))
+	coloration, _ := strconv.Atoi(TrouverValeur(str, "coloration"))
+	info, _ := strconv.Atoi(TrouverValeur(str, "info"))
+	cible, _ := strconv.Atoi(TrouverValeur(str, "cible"))
+
+	messageVague := MessageVague{site, ColorationVague(coloration), info, cible}
+	return messageVague
+}
+
+//////////////////
+// Raccordement
+//////////////////
+
+func MessageRaccordToString(messageRaccord MessageRaccord) string {
+	return sepM + sepP + "site" + sepP + strconv.Itoa(messageRaccord.Site) +
+		sepM + sepP + "type" + sepP + messageRaccord.Type +
+		sepM + sepP + "info" + sepP + strconv.Itoa(messageRaccord.Info) +
+		sepM + sepP + "cible" + sepP + strconv.Itoa(messageRaccord.Cible)
+}
+
+func StringToMessageRaccord(str string) MessageRaccord {
+	site, _ := strconv.Atoi(TrouverValeur(str, "site"))
+	typeM := TrouverValeur(str, "type")
+	info, _ := strconv.Atoi(TrouverValeur(str, "info"))
+	cible, _ := strconv.Atoi(TrouverValeur(str, "cible"))
+
+	messageRaccord := MessageRaccord{site, typeM, info, cible}
+	return messageRaccord
+}
