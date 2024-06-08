@@ -267,7 +267,7 @@ func traiterMessageRouge(rcvmsg string) {
 }
 
 func traiterMessageVert(rcvmsg string) {
-	utils.DisplayInfo(monNom, "traiter", "Traitement message vert")
+	utils.DisplayInfo(monNom, "Traitement message vert", rcvmsg)
 	messageVague := utils.StringToMessageVague(rcvmsg)
 
 	if monParent != 0 { // Si notre état n'a pas encore été réinitialisé
@@ -301,6 +301,7 @@ func reinitialiserVague(info int) {
 	monParent = 0
 	nbVoisinsAttendus = *pVoisins
 	N = N + info
+	//utils.DisplayError(monNom, "Je remonterais ", strconv.Itoa(demande.Site))
 	envoyerSpecialControl("N=" + strconv.Itoa(N))
 	monElu = N * 100
 	demande.Site = 0

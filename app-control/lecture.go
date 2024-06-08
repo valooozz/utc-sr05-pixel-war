@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 	"utils"
 )
 
@@ -43,8 +44,7 @@ func lecture() {
 				tabSC[i].Type = utils.Liberation
 				tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
 			}
-			traiterDebutSauvegarde() //Demande une sauvegarde automatiquement en arrivant
-			traiterMessagePixel("/=positionX=1000/=positionY=1000/=R=0/=G=0/=B=0")
+			go lancerSaveAuto()
 			continue
 		}
 
@@ -142,6 +142,8 @@ func traiterMessageControle(id int, rcvmsg string) {
 
 	envoyerMessageControle(id, message) // Pour la prochaine app de contrôle de l'anneau
 	envoyerMessageBase(messagePixel)    // Pour l'app de base
+
+	maCouleur = utils.Blanc //Pour multiplier les sauvegardes
 }
 
 func traiterMessagePrepost(id int, rcvmsg string) {
@@ -212,14 +214,23 @@ func traiterDebutSauvegarde() {
 }
 
 func finSauvegarde() {
+	maCouleur = utils.Blanc
+	jeSuisInitiateur = false
 	utils.DisplayInfoSauvegarde(monNom, "Fin", "Sauvegarde complétée")
 
 	// On affiche l'état global (liste des états locaux et liste des messages préposts)
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
 		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.EtatLocalToString(etatLocal))
 	}
+
+	for _, mp := range etatGlobal.ListEtatLocal[1].ListMessagePixel {
+		utils.DisplayInfoSauvegarde(monNom, "MAJ ETAT LOCAL", "Je prends dans l'état de "+etatGlobal.ListEtatLocal[1].NomSite)
+		monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, mp)
+	}
+
 	for _, mp := range etatGlobal.ListMessagePrepost {
 		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.MessageToString(mp))
+		monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, mp.Pixel)
 	}
 
 	// On calcule si la coupure et cohérente et on récupère sa date (max de la vectorielle de chaque site)
@@ -323,4 +334,10 @@ func traiterMessageAccuse(id int, rcvmsg string) {
 	if tabSC[message.Estampille.Site].Type != utils.Requete {
 		tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
 	}
+}
+
+func lancerSaveAuto() {
+	time.Sleep(1 * time.Second)
+	traiterDebutSauvegarde() //Demande une sauvegarde automatiquement en arrivant
+	traiterMessagePixel("/=positionX=1000/=positionY=1000/=R=0/=G=0/=B=0")
 }
