@@ -43,6 +43,8 @@ func lecture() {
 				tabSC[i].Type = utils.Liberation
 				tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
 			}
+			traiterDebutSauvegarde() //Demande une sauvegarde automatiquement en arrivant
+			traiterMessagePixel("/=positionX=1000/=positionY=1000/=R=0/=G=0/=B=0")
 			continue
 		}
 

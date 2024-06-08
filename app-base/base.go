@@ -68,6 +68,7 @@ var pMode = flag.String("m", "a", "mode") //"g" ou "a" pour graphique ou automat
 var pPort = flag.Int("port", 4444, "n° de port")
 var pAddr = flag.String("addr", "localhost", "nom/adresse machine")
 var modeDeLancement string
+var lastSent string
 
 func main() {
 	flag.Parse()

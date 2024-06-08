@@ -21,11 +21,13 @@
     }
 }*/
 const drawPixel = ({ctx, color, rowIndex, colIndex, pixelData, pixelSize}) => {
-    console.log("x", rowIndex);
-    pixelData[rowIndex][colIndex] = color;
-    console.log("color", color)
-    ctx.fillStyle = pixelData[rowIndex][colIndex];
-    ctx.fillRect(rowIndex*pixelSize, colIndex*pixelSize, pixelSize, pixelSize);
+    if (rowIndex !== 1000) { //Cas d'un nouvelle arrivant
+        console.log("x", rowIndex);
+        pixelData[rowIndex][colIndex] = color;
+        console.log("color", color)
+        ctx.fillStyle = pixelData[rowIndex][colIndex];
+        ctx.fillRect(rowIndex * pixelSize, colIndex * pixelSize, pixelSize, pixelSize);
+    }
 };
 
 export default drawPixel;

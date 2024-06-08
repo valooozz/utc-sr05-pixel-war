@@ -58,6 +58,7 @@ func traiterMessageInterface(msg []byte) {
 		demandeSC()
 		wsSend(message)
 		envoiSequentiel(message)
+		lastSent = message
 		relacherSC()
 	}
 }

@@ -136,7 +136,7 @@ func CopyEtatLocal(etatLocal EtatLocal) EtatLocal {
 
 // Retourne une grille de pixels unique à partir d'un état global
 func ReconstituerCarte(etatGlobal EtatGlobal) []MessagePixel {
-	var carte = etatGlobal.ListEtatLocal[0].ListMessagePixel
+	var carte = etatGlobal.ListEtatLocal[1].ListMessagePixel
 	var pixel MessagePixel
 
 	for _, message := range etatGlobal.ListMessagePrepost {
