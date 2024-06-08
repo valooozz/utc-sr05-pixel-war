@@ -11,15 +11,19 @@ func attenteRaccordement() {
 
 	for monEtat != "actif" {
 		fmt.Scanln(&rcvmsg)
+
+		if rcvmsg[0] == uint8('C') {
+			continue
+		}
+
 		message := rcvmsg[1:]
 
 		if rcvmsg == "" {
 			utils.DisplayError(monNom, "lecture", "Message vide reçu")
 			break
 		}
-		mutex.Lock()
 
-		//utils.DisplayWarning(monNom, "attente", "Message reçu : "+rcvmsg)
+		mutex.Lock()
 
 		if utils.TrouverValeur(message, "type") == "acceptation" {
 			cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
@@ -326,7 +330,7 @@ func traiterAcceptationRaccord(rcvmsg string) {
 		monEtat = "actif"
 		N = messageRaccord.Info
 		utils.DisplayInfoSauvegarde(monNom, "traiter", "N="+strconv.Itoa(N))
-		envoyerSpecialControl("N=" + strconv.Itoa(N))
+		envoyerSpecialControl("NN=" + strconv.Itoa(N))
 
 		go lecture()
 

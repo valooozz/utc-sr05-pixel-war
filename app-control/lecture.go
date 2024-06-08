@@ -19,18 +19,22 @@ func lecture() {
 			break
 		}
 
-		// Mise à jour de N
+		// Mise à jour de N pour un ancien
 		if rcvmsg[0:3] == "CN=" {
 			N, _ = strconv.Atoi(rcvmsg[3:])
 			utils.DisplayWarning(monNom, "lecture", "Je mets mon N à "+strconv.Itoa(N))
-			if N == Site+1 { //Cas du petit nouveau : on réalloue tout le tableau
-				tabSC = make([]utils.MessageExclusionMutuelle, N)
-				for i := 0; i < len(tabSC); i++ {
-					tabSC[i].Type = utils.Liberation
-					tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
-				}
-			} else { //Cas d'un ancien : on réalloue une partie
-				tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}})
+			tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}})
+			continue
+		}
+
+		// Mise à jour de N pour le nouveau
+		if rcvmsg[0:4] == "CNN=" {
+			N, _ = strconv.Atoi(rcvmsg[4:])
+			utils.DisplayWarning(monNom, "lecture", "Je mets mon N à "+strconv.Itoa(N))
+			tabSC = make([]utils.MessageExclusionMutuelle, N)
+			for i := 0; i < len(tabSC); i++ {
+				tabSC[i].Type = utils.Liberation
+				tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
 			}
 			continue
 		}
