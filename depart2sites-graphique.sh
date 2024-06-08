@@ -64,7 +64,7 @@ portN5=4453
 go run app-base -n A5 -m g -port $portB5 < /tmp/in_A5 > /tmp/out_A5 &
 #go run app-base -n A5 < /tmp/in_A5 > /tmp/out_A5 &
 go run app-control -n C5 -nbsites 6 < /tmp/in_C5 > /tmp/out_C5 &
-go run app-net -n N5 -r '[4,4]' -nbsites 6 -port $portN5 -v 1 -q 15 -c 2 < /tmp/in_N5 > /tmp/out_N5 &
+go run app-net -n N5 -r '[4,4]' -nbsites 6 -port $portN5 -v 1 -q 20 -c 4 < /tmp/in_N5 > /tmp/out_N5 &
 open -a "Google Chrome" "http://localhost:63340/pixel-war/app-base/frontend/index.html?portB=$portB5&portN=$portN5"
 
 

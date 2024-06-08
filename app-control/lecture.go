@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"strings"
 	"time"
 	"utils"
 )
@@ -23,12 +24,14 @@ func lecture() {
 
 		// Mise à jour de N pour un ancien
 		if rcvmsg[0:3] == "CN=" {
-			newN, _ := strconv.Atoi(rcvmsg[3:])
+			indiceBarre := strings.IndexByte(rcvmsg, byte('|'))
+			siteDemandeur, _ := strconv.Atoi(rcvmsg[indiceBarre+1:])
+			newN, _ := strconv.Atoi(rcvmsg[3:indiceBarre])
 			if newN > N {
 				tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}}) //On peut se permettre de mettre l'horloge à 0 puisqu'elle va changer après l'accusé
 				utils.DisplayWarning(monNom, "Arrivée", "Je mets mon N à "+strconv.Itoa(newN)+" | len(tabSC)="+strconv.Itoa(len(tabSC))+" | tabSC="+utils.TabSCToString(tabSC))
 			} else {
-				tabSC[len(tabSC)-1] = utils.MessageExclusionMutuelle{utils.Liberation, utils.Estampille{tabSC[len(tabSC)-1].Estampille.Site, math.MaxInt}} // ATTENTION, ZONE TRÈS SENSIBLE ICI : On ne peut pas se permettre de mettre l'horloge à 0 car elle ne va pas changer avant réception du message
+				tabSC[siteDemandeur-1] = utils.MessageExclusionMutuelle{utils.Liberation, utils.Estampille{tabSC[siteDemandeur-1].Estampille.Site, math.MaxInt}} // ATTENTION, ZONE TRÈS SENSIBLE ICI : On ne peut pas se permettre de mettre l'horloge à 0 car elle ne va pas changer avant réception du message
 				utils.DisplayWarning(monNom, "Départ", "Je mets mon N à "+strconv.Itoa(newN)+" | len(tabSC)="+strconv.Itoa(len(tabSC))+" | tabSC="+utils.TabSCToString(tabSC))
 			}
 			N = newN

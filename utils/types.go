@@ -127,10 +127,11 @@ const (
 )
 
 type MessageVague struct {
-	Site       int
-	Coloration ColorationVague
-	Info       int
-	Cible      int
+	Site          int
+	Coloration    ColorationVague
+	Info          int
+	Cible         int
+	SiteDemandeur int
 }
 
 /////////////////

@@ -341,7 +341,8 @@ func MessageVagueToString(messageVague MessageVague) string {
 	return sepM + sepP + "site" + sepP + strconv.Itoa(messageVague.Site) +
 		sepM + sepP + "coloration" + sepP + strconv.Itoa(int(messageVague.Coloration)) +
 		sepM + sepP + "info" + sepP + strconv.Itoa(messageVague.Info) +
-		sepM + sepP + "cible" + sepP + strconv.Itoa(messageVague.Cible)
+		sepM + sepP + "cible" + sepP + strconv.Itoa(messageVague.Cible) +
+		sepM + sepP + "siteDemandeur" + sepP + strconv.Itoa(messageVague.SiteDemandeur)
 }
 
 func StringToMessageVague(str string) MessageVague {
@@ -349,8 +350,9 @@ func StringToMessageVague(str string) MessageVague {
 	coloration, _ := strconv.Atoi(TrouverValeur(str, "coloration"))
 	info, _ := strconv.Atoi(TrouverValeur(str, "info"))
 	cible, _ := strconv.Atoi(TrouverValeur(str, "cible"))
+	siteD, _ := strconv.Atoi(TrouverValeur(str, "siteDemandeur"))
 
-	messageVague := MessageVague{site, ColorationVague(coloration), info, cible}
+	messageVague := MessageVague{site, ColorationVague(coloration), info, cible, siteD}
 	return messageVague
 }
 

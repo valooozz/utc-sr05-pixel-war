@@ -33,21 +33,21 @@ func envoyerSpecialControl(message string) {
 //////////////
 
 func envoyerMessageBleu(cible int) {
-	messageVague := utils.MessageVague{monNum, utils.ColorationVague(1), monElu, cible}
+	messageVague := utils.MessageVague{monNum, utils.ColorationVague(1), monElu, cible, -1}
 	str := utils.MessageVagueToString(messageVague)
 
 	envoyerNet(str)
 }
 
 func envoyerMessageRouge(cible int) {
-	messageVague := utils.MessageVague{monNum, utils.ColorationVague(2), monElu, cible}
+	messageVague := utils.MessageVague{monNum, utils.ColorationVague(2), monElu, cible, -1}
 	str := utils.MessageVagueToString(messageVague)
 
 	envoyerNet(str)
 }
 
-func envoyerMessageVert(info int, cible int) {
-	messageVague := utils.MessageVague{monNum, utils.ColorationVague(3), info, cible}
+func envoyerMessageVert(info int, cible int, siteDemandeur int) {
+	messageVague := utils.MessageVague{monNum, utils.ColorationVague(3), info, cible, siteDemandeur}
 	str := utils.MessageVagueToString(messageVague)
 
 	envoyerNet(str)

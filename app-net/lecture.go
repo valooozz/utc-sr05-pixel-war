@@ -271,8 +271,8 @@ func traiterMessageVert(rcvmsg string) {
 	messageVague := utils.StringToMessageVague(rcvmsg)
 
 	if monParent != 0 { // Si notre état n'a pas encore été réinitialisé
-		reinitialiserVague(messageVague.Info)
-		envoyerMessageVert(messageVague.Info, messageVague.Site)
+		reinitialiserVague(messageVague.Info, messageVague.SiteDemandeur)
+		envoyerMessageVert(messageVague.Info, messageVague.Site, messageVague.SiteDemandeur)
 	}
 }
 
@@ -285,8 +285,8 @@ func traiterFinElection() {
 		majRoutage(demande.Site)
 	}
 
-	envoyerMessageVert(demande.Info, monNum)
-	reinitialiserVague(demande.Info)
+	envoyerMessageVert(demande.Info, monNum, demande.Site)
+	reinitialiserVague(demande.Info, demande.Site)
 }
 
 func majRoutage(nouveauSite int) {
@@ -296,13 +296,13 @@ func majRoutage(nouveauSite int) {
 	utils.DisplayError(monNom, "majRoutage", utils.TableDeRoutageToString(tableDeRoutage))
 }
 
-func reinitialiserVague(info int) {
+func reinitialiserVague(info int, siteDemandeur int) {
 	utils.DisplayInfo(monNom, "traiter", "Réinitialisation")
 	monParent = 0
 	nbVoisinsAttendus = *pVoisins
 	N = N + info
-	//utils.DisplayError(monNom, "Je remonterais ", strconv.Itoa(demande.Site))
-	envoyerSpecialControl("N=" + strconv.Itoa(N))
+	//utils.DisplayError(monNom, "Je remonterais ", strconv.Itoa(siteDemandeur))
+	envoyerSpecialControl("N=" + strconv.Itoa(N) + "|" + strconv.Itoa(siteDemandeur))
 	monElu = N * 100
 	demande.Site = 0
 	demande.Info = 0
@@ -349,8 +349,8 @@ func traiterAcceptationRaccord(rcvmsg string) {
 }
 
 func traiterDepartRaccord() { // JE CROIS QU'ELLE SERT A RIEN CETTE FONCTION
-	envoyerMessageVert(demande.Info, monNum)
-	reinitialiserVague(demande.Info)
+	envoyerMessageVert(demande.Info, monNum, demande.Site)
+	reinitialiserVague(demande.Info, demande.Site)
 }
 
 func traiterSignalRaccord(rcvmsg string) {
