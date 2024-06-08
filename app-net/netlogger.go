@@ -39,7 +39,6 @@ func preparateur(typeAction string, messageNet utils.MessageNet) {
 			t = "Liberation"
 		}
 		str = t + " de " + strconv.Itoa(messageSC.Estampille.Site+1) + " - H = " + strconv.Itoa(messageSC.Estampille.Horloge)
-
 	} else { //À améliorer lors de l'ajout du réseau dynamique
 		str = "Message non reconnu"
 	}

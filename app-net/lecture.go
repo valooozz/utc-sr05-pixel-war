@@ -122,20 +122,21 @@ func transmission(rcvmsg string) {
 			if utils.TrouverValeur(message, "header") != "" {
 				messageNet := utils.StringToMessageNet(message)
 				header := messageNet.Header
-				headerForward := header
-				headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
-				headerForward.Origine = monNum
-				messageNet.Header = headerForward
-				envoyerNet(utils.MessageNetToString(messageNet))
-				preparateur("E", messageNet) //log au niveau du client
+				if header.Destination == monNum {
+					headerForward := header
+					headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
+					headerForward.Origine = monNum
+					messageNet.Header = headerForward
+					envoyerNet(utils.MessageNetToString(messageNet))
+					preparateur("E", messageNet) //log au niveau du client
 
-				// Fonctionnement si jamais on change la table de routage des sites encore actifs :
-				/*messageNet := utils.StringToMessageNet(message)
-				header := messageNet.Header
-				if header.Destination == utils.GetDestinationFor(header.Origine, tableDeRoutage) {
-					fmt.Println(rcvmsg)
-				}*/
-
+					// Fonctionnement si jamais on change la table de routage des sites encore actifs :
+					/*messageNet := utils.StringToMessageNet(message)
+					header := messageNet.Header
+					if header.Destination == utils.GetDestinationFor(header.Origine, tableDeRoutage) {
+						fmt.Println(rcvmsg)
+					}*/
+				}
 				// Si c'est un message pour les apps net, et qu'on a plus (+) d'un voisin (évite quelques cas de ping-pong infini)
 			} else if nbVoisinsAttendus > 1 {
 				fmt.Println(rcvmsg)
@@ -280,7 +281,9 @@ func traiterFinElection() {
 
 	envoyerAcceptationRaccord(demande.Site)
 
-	majRoutage(demande.Site)
+	if demande.Info == 1 { //Pour le moment, on ne change le routage du site élu qu'à l'arrivée d'un membre, au même titre que les autres
+		majRoutage(demande.Site)
+	}
 
 	envoyerMessageVert(demande.Info, monNum)
 	reinitialiserVague(demande.Info)

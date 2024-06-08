@@ -46,6 +46,10 @@ func launchServer(port string, addr string) {
 }
 
 func traiterMessageInterface(msg []byte) {
-	message := string(msg)
-	utils.DisplayWarning(monNom, "TraiterMessageInterface()", message)
+	/*message := string(msg)
+	if message == "inactif" {
+		monEtat = "inactif"
+	} else if message == "actif" {
+		monEtat = "actif"
+	}*/
 }

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"utils"
 )
@@ -21,9 +22,15 @@ func lecture() {
 
 		// Mise à jour de N pour un ancien
 		if rcvmsg[0:3] == "CN=" {
-			N, _ = strconv.Atoi(rcvmsg[3:])
-			utils.DisplayWarning(monNom, "lecture", "Je mets mon N à "+strconv.Itoa(N))
-			tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}})
+			newN, _ := strconv.Atoi(rcvmsg[3:])
+			if newN > N {
+				tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}}) //On peut se permettre de mettre l'horloge à 0 puisqu'elle va changer après l'accusé
+				utils.DisplayWarning(monNom, "Arrivée", "Je mets mon N à "+strconv.Itoa(newN)+" | len(tabSC)="+strconv.Itoa(len(tabSC))+" | tabSC="+utils.TabSCToString(tabSC))
+			} else {
+				tabSC[len(tabSC)-1] = utils.MessageExclusionMutuelle{utils.Liberation, utils.Estampille{tabSC[len(tabSC)-1].Estampille.Site, math.MaxInt}} // ATTENTION, ZONE TRÈS SENSIBLE ICI : On ne peut pas se permettre de mettre l'horloge à 0 car elle ne va pas changer avant réception du message
+				utils.DisplayWarning(monNom, "Départ", "Je mets mon N à "+strconv.Itoa(newN)+" | len(tabSC)="+strconv.Itoa(len(tabSC))+" | tabSC="+utils.TabSCToString(tabSC))
+			}
+			N = newN
 			continue
 		}
 
@@ -44,12 +51,12 @@ func lecture() {
 		// On traite uniquement les messages qui commencent par un 'C'
 		if rcvmsg[0] == uint8('C') {
 			rcvmsg = rcvmsg[1:]
-			//utils.DisplayWarning(monNom, "Reception", "Je vais traiter ceci :"+rcvmsg)
 			//utils.DisplayInfoSauvegarde("JE SUIS LÀ", "", rcvmsg)
 
 			if utils.TrouverValeur(rcvmsg, "id") != "" { //Cas d'un message en provenance d'en bas
 				id, _ = strconv.Atoi(utils.TrouverValeur(rcvmsg, "id"))
 				rcvmsg = utils.TrouverValeur(rcvmsg, "message")
+				//utils.DisplayWarning(monNom, "Reception", "Je vais traiter ceci :"+rcvmsg)
 			}
 
 			if rcvmsg == "sauvegarde" {
@@ -273,6 +280,8 @@ func traiterMessageRequete(id int, rcvmsg string) {
 		envoyerMessageSCBase(tabSC[Site].Type)
 	} else {
 		utils.DisplayInfoSC(monNom, "Requete", "SC refusée ! "+" La SC est occupée par C"+strconv.Itoa(utils.PlusVieilleRequeteAlive(Site, tabSC)+1)+" !")
+		//utils.DisplayInfoSC(monNom, "Requete", "tabSC="+utils.TabSCToString(tabSC))
+		//os.Exit(1)
 	}
 }
 

@@ -403,3 +403,18 @@ func StringToMessageBlocage(str string) MessageBlocage {
 	messageBlocage := MessageBlocage{site, b, cible}
 	return messageBlocage
 }
+
+func TabSCToString(tab []MessageExclusionMutuelle) string {
+	var sb = "["
+
+	for i, msg := range tab {
+		if i > 0 {
+			sb += "|"
+		}
+		// Conversion de chaque message en chaîne et ajout au StringBuilder
+		sb += "T:" + strconv.Itoa(int(msg.Type)) + "S:" + strconv.Itoa(msg.Estampille.Site) + "H:" + strconv.Itoa(msg.Estampille.Horloge)
+	}
+	sb += "]"
+
+	return sb
+}

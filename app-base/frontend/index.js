@@ -224,6 +224,26 @@ function addToLogNet(message) {
     logs.scroll(0, logs.scrollHeight);
 }
 
+document.getElementById("inactif").onclick = function (evt){
+    if(!ws2) {
+        return false;
+    }
+    let sndmsg = "inactif"
+    addToLogNet("Envoi: " + sndmsg);
+    ws2.send(sndmsg);
+    return false;
+}
+
+document.getElementById("actif").onclick = function (evt){
+    if(!ws2) {
+        return false;
+    }
+    let sndmsg = "actif"
+    addToLogNet("Envoi: " + sndmsg);
+    ws2.send(sndmsg);
+    return false;
+}
+
 
 
 // RECUPERATION AUTOMATIQUE DES PORTS
