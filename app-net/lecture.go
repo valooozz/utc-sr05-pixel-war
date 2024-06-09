@@ -6,17 +6,18 @@ import (
 	"utils"
 )
 
+// Fonction de lecture d'une application inactive qui n'a pas encore rejoint le réseau
 func attenteRaccordement() {
 	var rcvmsg string
 
 	for monEtat != "actif" {
-		fmt.Scanln(&rcvmsg)
+		fmt.Scanln(&rcvmsg) // On reçoit les messages même si on est inactifs, pour les évacuer de notre entrée standard
 
-		if rcvmsg[0] == uint8('C') {
+		if rcvmsg[0] == uint8('C') { // On ignore les messages provenant d'une app de contrôle
 			continue
 		}
 
-		message := rcvmsg[1:]
+		message := rcvmsg[1:] // On extrait le message en retirant la lettre préfixe
 
 		if rcvmsg == "" {
 			utils.DisplayError(monNom, "lecture", "Message vide reçu")
@@ -25,6 +26,7 @@ func attenteRaccordement() {
 
 		mutex.Lock()
 
+		// Si on reçoit une acceptation de raccord, on la traite
 		if utils.TrouverValeur(message, "type") == "acceptation" {
 			cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
 			if cible == monNum {
@@ -36,14 +38,16 @@ func attenteRaccordement() {
 	}
 }
 
+// Fonction de lecture d'une application active dans le réseau
 func lecture() {
 	var rcvmsg string
 
 	utils.DisplayError(monNom, "Ma table & monNum ", utils.TableDeRoutageToString(tableDeRoutage)+" "+strconv.Itoa(monNum))
+
 	for monEtat != "inactif" {
-		//time.Sleep(100 * time.Millisecond)
 		fmt.Scanln(&rcvmsg)
 
+		// On peut passer inactif lors de l'attente d'un message
 		if monEtat == "inactif" {
 			break
 		}
@@ -54,17 +58,16 @@ func lecture() {
 		}
 
 		mutex.Lock()
-		//time.Sleep(time.Duration(1) * time.Second)
 
 		//utils.DisplayWarning(monNom, "lecture", "Message reçu : "+rcvmsg)
 
+		// On ne traite que les messages portant le préfixe 'N'
 		if rcvmsg[0] == uint8('N') {
-			message := rcvmsg[1:]
+			message := rcvmsg[1:] // On extrait le message en retirant le préfixe 'N'
 
-			if utils.TrouverValeur(message, "header") != "" {
-				//utils.DisplayWarning(monNom, "lecture", "Message reçu : "+message)
+			if utils.TrouverValeur(message, "header") != "" { // Cas d'un message d'une app-net qui transmet des informations sur l'anneau logique
 				traiterMessageNet(message)
-			} else if utils.TrouverValeur(message, "id") != "" { //Cas de la réception d'un message de l'app-control associée
+			} else if utils.TrouverValeur(message, "id") != "" { // Cas d'un message de l'app-control associée
 				traiterMessageId(message)
 			} else if utils.TrouverValeur(message, "type") == "demande" {
 				cible, _ := strconv.Atoi(utils.TrouverValeur(message, "cible"))
@@ -106,23 +109,26 @@ func lecture() {
 		mutex.Unlock()
 	}
 
+	// Si on arrive là, c'est qu'on est passé inactif, on transmet donc le premier message reçu
 	transmission(rcvmsg)
 }
 
+// Fonction de lecture pour un site inactif dans le réseau, qui doit retransmettre les messages qu'il reçoit
 func transmission(rcvmsg string) {
 	fmt.Println(rcvmsg)
 
 	for monEtat == "inactif" {
 		fmt.Scanln(&rcvmsg)
 
+		// On ne traite que les messages portant le préfixe 'N'
 		if rcvmsg[0] == uint8('N') {
-			message := rcvmsg[1:]
+			message := rcvmsg[1:] // On extrait le message en retirant le préfixe 'N'
 
-			// Si c'est un message pour l'anneau logique, on le transmet en gardant
+			// Si c'est un message pour l'anneau logique, on le transmet sur l'anneau
 			if utils.TrouverValeur(message, "header") != "" {
 				messageNet := utils.StringToMessageNet(message)
 				header := messageNet.Header
-				if header.Destination == monNum {
+				if header.Destination == monNum { // Si le message nous est destiné sur l'anneau
 					headerForward := header
 					headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
 					headerForward.Origine = monNum
@@ -130,6 +136,7 @@ func transmission(rcvmsg string) {
 					envoyerNet(utils.MessageNetToString(messageNet))
 					preparateur("E", messageNet) //log au niveau du client
 
+					// A RETIRER
 					// Fonctionnement si jamais on change la table de routage des sites encore actifs :
 					/*messageNet := utils.StringToMessageNet(message)
 					header := messageNet.Header
@@ -145,10 +152,11 @@ func transmission(rcvmsg string) {
 	}
 }
 
-///////////////////////////////////////
+//////////////////////////////////
 // Diffusion sur l'anneau logique
-///////////////////////////////////////
+//////////////////////////////////
 
+// Traite un message reçu de l'app-control, qui porte donc un id
 func traiterMessageId(message string) {
 	//utils.utils.DisplayError(monNom, "traiterMessageId", "Reçu : "+message)
 	messageId := utils.StringToMessageId(message)
@@ -158,9 +166,9 @@ func traiterMessageId(message string) {
 	}
 	var header utils.Header
 	if messageId.Id == -1 {
-		//Il faut le wrapper pour la première fois
+		// Il faut le wrapper pour la première fois
 		vecteur := make([]int, N)
-		//Initialisation du header avec num du site courant, destination de la première règle de routage en destination, etc.
+		// Initialisation du header avec num du site courant, destination de la première règle de routage en destination, etc.
 		header = utils.Header{Origine: monNum, Destination: tableDeRoutage[0].Destination, Initiateur: monNum, Vecteur: vecteur}
 	} else {
 		header = headers[strconv.Itoa(messageId.Id)]
@@ -168,7 +176,7 @@ func traiterMessageId(message string) {
 		header.Vecteur[monNum-1] = 1
 		header.Destination = utils.GetDestinationFor(header.Origine, tableDeRoutage)
 		header.Origine = monNum
-		//Il faut récupérer son header dans la map headers pour le wrapper avec (ne pas oublier de maj certains headers)
+		// Il faut récupérer son header dans la map headers pour le wrapper avec (ne pas oublier de maj certains headers)
 	}
 	messageNet := utils.MessageNet{Header: header, MessageControl: messageId.Message}
 	//utils.utils.DisplayError(monNom, "traiterMessageId", "Envoi : "+utils.MessageNetToString(messageNet))
@@ -177,14 +185,19 @@ func traiterMessageId(message string) {
 	//utils.utils.DisplayError(monNom, "traiterMessageId", "Envoyé : "+utils.MessageNetToString(messageNet))
 }
 
+// Traite un message reçu d'une app-net
 func traiterMessageNet(message string) {
 	messageNet := utils.StringToMessageNet(message)
 	header := messageNet.Header
-	if header.Destination == monNum {
-		preparateur("R", messageNet) //log au niveau du client
+
+	if header.Destination == monNum { // Si le message nous est destiné sur l'anneau
+		preparateur("R", messageNet) // log au niveau du client
 		//utils.utils.DisplayError(monNom, "traiterMessageNet", "Reçu : "+message)
+
+		// A RETIRER
 		//if header.Vecteur[monNum-1] == 1 || (header.Initiateur == monNum && !utils.IlNeRestePlusQue(header.Initiateur, header.Vecteur)) || header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
-		if header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
+
+		if header.Origine != tableDeRoutage[0].Origine { // nième réception ou repassage par l'initiateur
 			headerForward := header
 			headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
 			headerForward.Origine = monNum
@@ -192,13 +205,13 @@ func traiterMessageNet(message string) {
 			envoyerNet(utils.MessageNetToString(messageNet))
 			preparateur("E", messageNet) //log au niveau du client
 			//utils.utils.DisplayError(monNom, "traiterMessageNet", "Envoyé : "+utils.MessageNetToString(messageNet))
-		} else { //Première réception : on prend en charge le message
+		} else { // Première réception : on prend en charge le message
 			siteIdCpt++
 			headers[strconv.Itoa(siteIdCpt)] = header
 			messageControl := messageNet.MessageControl
 			//Ici on vient wrapper le message dans une capsule dédiée avec un id
 			messageId := utils.MessageId{Id: siteIdCpt, Message: messageControl}
-			envoyerMessageId(utils.MessageIdToString(messageId)) //envoi à l'app de control du site courant
+			envoyerMessageId(utils.MessageIdToString(messageId)) // On transmet le message à son app-control
 			//utils.utils.DisplayError(monNom, "traiterMessageNet", "IDENVOYÉ : "+utils.MessageIdToString(messageId))
 		}
 	}
@@ -208,9 +221,10 @@ func traiterMessageNet(message string) {
 // Election
 /////////////
 
+// Lance une vague (pour l'algorithme d'élection par extinction de vague)
 func debutVague() {
 	utils.DisplayWarning(monNom, "debut", "Début de la vague")
-	if monParent == 0 { // Le site n’a pas encore été atteint par la vague ; il peut encore se déclarer candidat.
+	if monParent == 0 { // Le site n’a pas encore été atteint par la vague, il peut encore se déclarer candidat
 		monElu = monNum
 		monParent = monNum
 
@@ -218,6 +232,7 @@ func debutVague() {
 	}
 }
 
+// Traite un message bleu (message descendant l'arborescence)
 func traiterMessageBleu(rcvmsg string) {
 	utils.DisplayInfoSC(monNom, "traiter", "Traitement message bleu")
 	messageVague := utils.StringToMessageVague(rcvmsg)
@@ -234,17 +249,18 @@ func traiterMessageBleu(rcvmsg string) {
 
 		if nbVoisinsAttendus > 0 {
 			utils.DisplayInfoSC(monNom, "traiter", "En attente de voisins, on envoie un message bleu à tous les voisins sauf celui qui vient de nous en envoyer")
-			envoyerMessageBleu(site) // Pour tous les voisins sauf j
+			envoyerMessageBleu(site) // Pour tous les voisins sauf le nouveau parent
 		} else {
 			utils.DisplayInfoSC(monNom, "traiter", "Tous les voisins ont répondu, on retourne un message rouge")
-			envoyerMessageRouge(site) // Pour j
+			envoyerMessageRouge(site) // Pour le nouveau parent
 		}
 	} else if monElu == info { // Même vague mais le site est déjà au courant
 		utils.DisplayInfoSC(monNom, "traiter", "Même vague, on retourne un message rouge")
-		envoyerMessageRouge(site)
+		envoyerMessageRouge(site) // Pour le site qui a envoyé le message bleu
 	}
 }
 
+// Traite un message rouge (message remontant l'arborescence)
 func traiterMessageRouge(rcvmsg string) {
 	utils.DisplayError(monNom, "traiter", "Traitement message rouge")
 	messageVague := utils.StringToMessageVague(rcvmsg)
@@ -266,6 +282,7 @@ func traiterMessageRouge(rcvmsg string) {
 	}
 }
 
+// Traite un message vert, qui correspond à un demi-vague servant à réinitialiser le réseau pour la prochaine élection
 func traiterMessageVert(rcvmsg string) {
 	utils.DisplayInfo(monNom, "Traitement message vert", rcvmsg)
 	messageVague := utils.StringToMessageVague(rcvmsg)
@@ -276,12 +293,13 @@ func traiterMessageVert(rcvmsg string) {
 	}
 }
 
+// Traite la fin d'une élection, quand on est élu
 func traiterFinElection() {
 	utils.DisplayError(monNom, "traiter", "Algo terminé, je suis élu")
 
-	envoyerAcceptationRaccord(demande.Site)
+	envoyerAcceptationRaccord(demande.Site) // On envoie une acceptation au site demandeur
 
-	if demande.Info == 1 { //Pour le moment, on ne change le routage du site élu qu'à l'arrivée d'un membre, au même titre que les autres
+	if demande.Info == 1 { // Pour le moment, on ne change le routage du site élu qu'à l'arrivée d'un membre, au même titre que les autres
 		majRoutage(demande.Site)
 	}
 
@@ -289,6 +307,7 @@ func traiterFinElection() {
 	reinitialiserVague(demande.Info, demande.Site)
 }
 
+// Met à jour la table de routage pour intégrer le nouveau site
 func majRoutage(nouveauSite int) {
 	tmp := tableDeRoutage[0].Destination
 	tableDeRoutage[0].Destination = nouveauSite
@@ -296,13 +315,17 @@ func majRoutage(nouveauSite int) {
 	utils.DisplayError(monNom, "majRoutage", utils.TableDeRoutageToString(tableDeRoutage))
 }
 
+// Réinitialise les informations associées à l'algorithme d'élection par extinction de vague
 func reinitialiserVague(info int, siteDemandeur int) {
 	utils.DisplayInfo(monNom, "traiter", "Réinitialisation")
 	monParent = 0
 	nbVoisinsAttendus = *pVoisins
 	N = N + info
 	//utils.DisplayError(monNom, "Je remonterais ", strconv.Itoa(siteDemandeur))
+
+	// On envoie le nouveau N à l'app-control, ainsi que le numéro du site qui rejoint ou part
 	envoyerSpecialControl("N=" + strconv.Itoa(N) + "|" + strconv.Itoa(siteDemandeur))
+
 	monElu = N * 100
 	demande.Site = 0
 	demande.Info = 0
@@ -314,6 +337,7 @@ func reinitialiserVague(info int, siteDemandeur int) {
 // Raccordement
 ////////////////
 
+// Traite une demande de raccord
 func traiterDemandeRaccord(rcvmsg string) {
 	utils.DisplayInfoSauvegarde(monNom, "traiter", "Traitement demande de raccord :"+rcvmsg)
 	messageRaccord := utils.StringToMessageRaccord(rcvmsg)
@@ -325,38 +349,42 @@ func traiterDemandeRaccord(rcvmsg string) {
 	}
 }
 
+// Traite une acceptation de raccord
 func traiterAcceptationRaccord(rcvmsg string) {
 	utils.DisplayInfoSauvegarde(monNom, "traiter", "Traitement acceptation de raccord")
 
 	messageRaccord := utils.StringToMessageRaccord(rcvmsg)
 
-	if monEtat == "attente" {
+	if monEtat == "attente" { // Si on rejoint
 		monEtat = "actif"
 		N = messageRaccord.Info
 		utils.DisplayInfoSauvegarde(monNom, "traiter", "N="+strconv.Itoa(N))
-		envoyerSpecialControl("NN=" + strconv.Itoa(N))
+		envoyerSpecialControl("NN=" + strconv.Itoa(N)) // On transmet à l'app-control le nombre de sites sur le réseau
 
 		go lecture()
 
-		envoyerSignalRaccord(1, monNum)
+		envoyerSignalRaccord(1, monNum) // On prévient les voisins de notre arrivée sur le réseau
 
-	} else if monEtat == "depart" {
+	} else if monEtat == "depart" { // Si on part
 		utils.DisplayInfoSauvegarde(monNom, "traiter", "Désactivation")
 		monEtat = "inactif"
 
-		envoyerSignalRaccord(-1, monNum)
+		envoyerSignalRaccord(-1, monNum) // On prévient les voisins de notre départ du réseau
 	}
 }
 
-func traiterDepartRaccord() { // JE CROIS QU'ELLE SERT A RIEN CETTE FONCTION
+// A RETIRER
+func traiterDepartRaccord() {
 	envoyerMessageVert(demande.Info, monNum, demande.Site)
 	reinitialiserVague(demande.Info, demande.Site)
 }
 
+// Traite un signal envoyé par un site qui rejoint ou part
 func traiterSignalRaccord(rcvmsg string) {
 	utils.DisplayInfoSauvegarde(monNom, "traiter", "Traitement signal raccord")
 	messageRaccord := utils.StringToMessageRaccord(rcvmsg)
 
+	// On met à jour le nombre de voisins
 	*pVoisins = *pVoisins + messageRaccord.Info
 	nbVoisinsAttendus = *pVoisins
 
@@ -366,6 +394,7 @@ func traiterSignalRaccord(rcvmsg string) {
 		envoyerVoisinRaccord(messageRaccord.Site)
 	}
 
+	// A RETIRER
 	// Si on veut changer la table de routage des sites actifs lors du départ d'un site
 	// Il faut que le site qui s'en va partage sa table de routage puis qu'on la traite ici :
 	/*var newDestination int
@@ -384,9 +413,11 @@ func traiterSignalRaccord(rcvmsg string) {
 
 }
 
+// Traite un signal envoyé par les voisins après qu'on les a prévenus de notre arrivée
 func traiterVoisinRaccord() {
 	utils.DisplayInfoSauvegarde(monNom, "traiter", "Traitement voisin raccord")
 
+	// On met à jour notre nombre de voisins
 	*pVoisins = *pVoisins + 1
 	nbVoisinsAttendus = *pVoisins
 

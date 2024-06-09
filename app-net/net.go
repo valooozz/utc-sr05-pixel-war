@@ -35,6 +35,7 @@ var pCible = flag.Int("c", 0, "site cible de la demande de raccord")
 var pTimer = flag.Int("t", 0, "timer avant de rejoindre le réseau")
 var pQuit = flag.Int("q", -1, "timer avant de quitter le réseau")
 
+// Demande à quitter le réseau après le temps spécifié, à la cible spécifiée
 func quitTimer(timer int, cible int) {
 	time.Sleep(time.Duration(timer) * time.Second)
 	monEtat = "depart"
@@ -60,7 +61,6 @@ func main() {
 
 	port := *pPort
 	addr := *pAddr
-	// On lance une go-routine pour écouter les messages entrants sur l'entrée standard
 
 	if monEtat == "actif" {
 		go lecture()
