@@ -173,7 +173,7 @@ func traiterMessageId(message string) {
 	} else {
 		header = headers[strconv.Itoa(messageId.Id)]
 		delete(headers, strconv.Itoa(messageId.Id))
-		header.Vecteur[monNum-1] = 1
+		//header.Vecteur[monNum-1] = 1
 		header.Destination = utils.GetDestinationFor(header.Origine, tableDeRoutage)
 		header.Origine = monNum
 		// Il faut récupérer son header dans la map headers pour le wrapper avec (ne pas oublier de maj certains headers)
