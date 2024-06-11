@@ -62,7 +62,7 @@ func main() {
 	port := *pPort
 	addr := *pAddr
 
-	if *pTimer == 0 {
+	if *pTimer == 0 && *pQuit == -1 {
 		if monEtat == "actif" {
 			go lecture()
 		} else if monEtat == "inactif" {
