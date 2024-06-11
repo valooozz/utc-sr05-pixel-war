@@ -62,19 +62,27 @@ func main() {
 	port := *pPort
 	addr := *pAddr
 
-	if monEtat == "actif" {
-		go lecture()
-
-		if *pQuit >= 0 {
-			go quitTimer(*pQuit, *pCible)
+	if *pTimer == 0 {
+		if monEtat == "actif" {
+			go lecture()
+		} else if monEtat == "inactif" {
+			go attenteRaccordement()
 		}
+	} else {
+		if monEtat == "actif" {
+			go lecture()
 
-	} else if monEtat == "inactif" {
-		go attenteRaccordement()
-		time.Sleep(time.Duration(*pTimer) * time.Second)
+			if *pQuit >= 0 {
+				go quitTimer(*pQuit, *pCible)
+			}
 
-		monEtat = "attente"
-		go envoyerDemandeRaccord(1, *pCible)
+		} else if monEtat == "inactif" {
+			go attenteRaccordement()
+			time.Sleep(time.Duration(*pTimer) * time.Second)
+
+			monEtat = "attente"
+			go envoyerDemandeRaccord(1, *pCible)
+		}
 	}
 
 	launchServer(strconv.Itoa(port), addr)

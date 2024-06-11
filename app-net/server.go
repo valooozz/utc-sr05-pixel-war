@@ -9,8 +9,6 @@ import (
 var ws *websocket.Conn = nil
 
 // INTERFACE -> APP NET
-//
-//	ne sert pas ici
 func doWebsocket(w http.ResponseWriter, r *http.Request) {
 	var upgrader = websocket.Upgrader{
 		CheckOrigin: func(r *http.Request) bool { return true },
@@ -46,10 +44,13 @@ func launchServer(port string, addr string) {
 }
 
 func traiterMessageInterface(msg []byte) {
-	/*message := string(msg)
+	message := string(msg)
+	utils.DisplayWarning(monNom, "Je reçois l'ordre de : ", message)
 	if message == "inactif" {
-		monEtat = "inactif"
+		monEtat = "depart"
+		go envoyerDemandeRaccord(-1, *pCible)
 	} else if message == "actif" {
-		monEtat = "actif"
-	}*/
+		monEtat = "attente"
+		go envoyerDemandeRaccord(1, *pCible)
+	}
 }
