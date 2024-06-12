@@ -377,35 +377,6 @@ func StringToMessageRaccord(str string) MessageRaccord {
 	return messageRaccord
 }
 
-func MessageBlocageToString(messageBlocage MessageBlocage) string {
-	var c string
-	if messageBlocage.Blocage {
-		c = "noir"
-	} else {
-		c = "gris"
-	}
-
-	return sepM + sepP + "site" + sepP + strconv.Itoa(messageBlocage.Site) +
-		sepM + sepP + "blocage" + sepP + c +
-		sepM + sepP + "cible" + sepP + strconv.Itoa(messageBlocage.Cible)
-}
-
-func StringToMessageBlocage(str string) MessageBlocage {
-	site, _ := strconv.Atoi(TrouverValeur(str, "site"))
-	blocage := TrouverValeur(str, "blocage")
-	cible, _ := strconv.Atoi(TrouverValeur(str, "cible"))
-
-	var b CouleurBlocage
-	if blocage == "noir" {
-		b = Noir
-	} else {
-		b = Gris
-	}
-
-	messageBlocage := MessageBlocage{site, b, cible}
-	return messageBlocage
-}
-
 func TabSCToString(tab []MessageExclusionMutuelle) string {
 	var sb = "["
 

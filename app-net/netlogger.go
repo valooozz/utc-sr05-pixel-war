@@ -5,6 +5,7 @@ import (
 	"utils"
 )
 
+// Mise en forme du log d'un pixel
 func pixelLisible(p utils.MessagePixel) string {
 	return "[(" + strconv.Itoa(p.PositionX) + "," + strconv.Itoa(p.PositionY) + ")|R" + strconv.Itoa(p.Rouge) + "|G" + strconv.Itoa(p.Vert) + "|B" + strconv.Itoa(p.Bleu) + "]"
 }
@@ -14,7 +15,7 @@ func log(str string) {
 	wsSend(str)
 }
 
-// Réception d'un message net
+// Mise en forme d'un log de l'app-net
 func preparateur(typeAction string, messageNet utils.MessageNet) {
 	origine := messageNet.Header.Origine
 	destination := messageNet.Header.Destination

@@ -242,6 +242,7 @@ func replaceOrAddPixel(carte []MessagePixel, newPixel MessagePixel) []MessagePix
 	return carte
 }
 
+// Retourne le numéro du site à qui envoyer le message, en fonction de quel site on l'a reçu et de sa table de routage locale
 func GetDestinationFor(source int, routage TableDeRoutage) int {
 	for _, route := range routage {
 		if route.Origine == source {
@@ -251,6 +252,7 @@ func GetDestinationFor(source int, routage TableDeRoutage) int {
 	return -1
 }
 
+// Fonction inutilisée dans l'état actuel des choses, laissée là si besoin de développer le projet
 func IlNeRestePlusQue(init int, vect []int) bool {
 	if vect[init-1] == 1 {
 		DisplayError("Utils", "IlNeRestePlusQue()", "L'initiateur n'est même pas faux")

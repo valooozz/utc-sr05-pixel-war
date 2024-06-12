@@ -127,11 +127,11 @@ const (
 )
 
 type MessageVague struct {
-	Site          int
-	Coloration    ColorationVague
-	Info          int
-	Cible         int
-	SiteDemandeur int
+	Site          int             // Le site qui envoie le MessageVague
+	Coloration    ColorationVague // Le type de message (bleu, rouge, vert)
+	Info          int             // le numéro du potentiel élu pour les messages bleus et rouges / le nouveau N pour les messages verts
+	Cible         int             // le site cible des messages rouges / le site qui doit ignorer (parent) les messages bleus et verts
+	SiteDemandeur int             // le site qui fait la demande de raccordement
 }
 
 /////////////////
@@ -139,26 +139,13 @@ type MessageVague struct {
 /////////////////
 
 type MessageRaccord struct {
-	Site  int
-	Type  string
-	Info  int
-	Cible int
+	Site  int    // Le site qui envoie le MessageRaccord
+	Type  string // demande ou acceptation
+	Info  int    // 1 si on veut rejoindre / -1 si on veut quitter
+	Cible int    // Le site à qui est destiné le MessageRaccord
 }
 
 type Demande struct {
-	Site int
-	Info int
-}
-
-type CouleurBlocage bool
-
-const (
-	Gris CouleurBlocage = false
-	Noir CouleurBlocage = true
-)
-
-type MessageBlocage struct {
-	Site    int
-	Blocage CouleurBlocage
-	Cible   int
+	Site int // Le site qui a fait la demande
+	Info int // 1 si c'est pour rejoindre / -1 si c'est pour quitter
 }
