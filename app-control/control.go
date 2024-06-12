@@ -12,7 +12,7 @@ import (
 // Définition des variables
 var mutex = &sync.Mutex{}
 var pNom = flag.String("n", "controle", "nom")
-var pNbsites = flag.Int("nbsites", 3, "nom")
+var pNbsites = flag.Int("nbsites", 1, "nom")
 var monNom string // Nom du site (option -n + pid)
 var Site int      // Numéro du site
 var N int         // Nombre de sites dans le réseau

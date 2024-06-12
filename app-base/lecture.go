@@ -15,12 +15,15 @@ func lecture() {
 	for {
 		fmt.Scanln(&rcvmsg)
 		// On vérifie que le message reçu n'est pas vide
+		//utils.DisplayError(monNom, "lecture", "Message reçu : "+rcvmsg)
 		if rcvmsg == "" {
 			utils.DisplayError(monNom, "lecture", "Message vide reçu")
-			continue
+			break
 		}
+
 		mutex.Lock()
-		if rcvmsg[0] == uint8('B') { // On traite le message s'il commence par un 'A'
+
+		if rcvmsg[0] == uint8('B') { // On traite le message s'il commence par un 'B'
 			// Traitement messages sauvegarde quand la sauvegarde a été terminée
 			if utils.TrouverValeur(rcvmsg[1:], "vectorielle") != "" {
 				traiterMessageSauvegarde(rcvmsg[1:])
@@ -71,11 +74,17 @@ func traiterMessageSauvegarde(str string) {
 	}
 	// Ecriture des pixels présents sur l'interface lors de la sauvegarde
 	for _, mp := range messageSauvegarde.ListMessagePixel {
+		if modeDeLancement == "g" {
+			wsSend(utils.MessagePixelToString(mp))
+		}
 		_, err := writer.WriteString(utils.MessagePixelToString(mp) + "\n")
 		if err != nil {
 			utils.DisplayError(monNom, "traiterMessageSauvegarde", "Erreur lors de l'écriture dans le fichier :"+err.Error())
 			return
 		}
+	}
+	if modeDeLancement == "g" {
+		wsSend(lastSent)
 	}
 	err = writer.Flush()
 	if err != nil {

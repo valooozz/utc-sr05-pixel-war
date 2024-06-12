@@ -10,17 +10,17 @@
 
 <form>
     <p>
-        <button id="connecter">Connecter</button>
-        <button id="fermer">Fermer</button>
+        <button class="button" id="connecter">Connecter</button>
+        <button class="button" id="fermer">Fermer</button>
         host : <input id="host" type="text" size="10" value="localhost">
-        port : <input id="port" type="text" maxlength="5" size="5" value="4444">
+        port : <input style="width: 8ch;" id="port" type="number" maxlength="5" size="5" value="4444">
     </p>
 </form>
 
 
 
 <hr>
-<b> Logs </b>
+<b> Logs app-base </b>
 <div id="logs" style="max-height: 10vh;overflow-y: scroll;"></div>
 <hr>
 <canvas></canvas>
@@ -44,11 +44,33 @@
 </div>
 <form>
     <p>
-        <button id="envoyer">Poser le pixel</button>
-        <button id="sauvegarder">Sauvegarder</button>
+        <button class="button" id="envoyer">Poser le pixel</button>
+        <button class="button" id="sauvegarder">Sauvegarder</button>
     </p>
 
 </form>
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<hr class="hrStyle">
+<form>
+    <p>
+        <button class="buttonNet" id="connecterNet">Connecter</button>
+        <button class="buttonNet" id="fermerNet">Fermer</button>
+        <button class="buttonNet" id="inactif">Quitter</button>
+        <button class="buttonNet" id="actif">Rejoindre</button>
+        host : <input id="hostNet" type="text" size="10" value="localhost">
+        port : <input style="width: 8ch;" id="portNet" type="number" maxlength="5" size="5" value="4445">
+    </p>
+</form>
+<hr class="hrStyle">
+<b style="color: #ff0000"> Logs app-net </b>
+<div id="logsNet" style="max-height: 10vh;overflow-y: scroll;"></div>
+<hr class="hrStyle">
 
 
 <script type="module" src="index.js"></script>

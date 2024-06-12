@@ -26,6 +26,7 @@ func nSecondsSnapshot(n int) {
 // Le programme envoie périodiquement des messages sur stdout
 func sendPeriodic(nbMessages int, slower bool) {
 	val, _ := strconv.Atoi(monNom[1:2])
+	time.Sleep(time.Duration(30) * time.Second)
 	for i := 0; i < nbMessages; i++ {
 		// On demande l'accès à la section critique
 		demandeSC()
@@ -37,6 +38,12 @@ func sendPeriodic(nbMessages int, slower bool) {
 			}
 			if monNom[0:2] == "A2" {
 				time.Sleep(time.Duration(1) * time.Second)
+			}
+			if monNom[0:2] == "A3" {
+				time.Sleep(time.Duration(2) * time.Second)
+			}
+			if monNom[0:2] == "A4" {
+				time.Sleep(time.Duration(500) * time.Millisecond)
 			}
 		}
 		// Variable val permet d'identifier le site initiateur du message
@@ -61,6 +68,7 @@ var pMode = flag.String("m", "a", "mode") //"g" ou "a" pour graphique ou automat
 var pPort = flag.Int("port", 4444, "n° de port")
 var pAddr = flag.String("addr", "localhost", "nom/adresse machine")
 var modeDeLancement string
+var lastSent string
 
 func main() {
 	flag.Parse()
@@ -89,12 +97,12 @@ func lancementModeGraphique(port string, addr string) {
 
 func lancementModeAutomatique() {
 	//On lance le snapshot sur A1 au bout de 10 secondes (A1 doit être en mode automatique biensûr)
-	if monNom[0:2] == "A1" {
-		go nSecondsSnapshot(10)
-	}
+	//if monNom[0:2] == "A1" {
+	//	go nSecondsSnapshot(10)
+	//}
 
 	//On lance un envoi automatique périodique sur la diagonale sur les 2 premiers/seuls sites (ils doivent exister sous ce nom biensûr)
-	if monNom[0:2] == "A1" || monNom[0:2] == "A2" {
+	if monNom[0:2] == "A1" || monNom[0:2] == "A2" || monNom[0:2] == "A3" || monNom[0:2] == "A4" {
 		go sendPeriodic(20, true)
 	}
 

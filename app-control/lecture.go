@@ -2,67 +2,111 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"strconv"
+	"strings"
+	"time"
 	"utils"
 )
 
 // Pour l'instant, boucle sur l'entrée standard, lit et communique le résultat à la routine d'écriture
 func lecture() {
 	var rcvmsg string
+	var id = -1
 	for {
 		fmt.Scanln(&rcvmsg)
+		//utils.DisplayError(monNom, "lecture", "Message reçu "+rcvmsg)
+
 		if rcvmsg == "" {
 			utils.DisplayError(monNom, "lecture", "Message vide reçu -> Fin du processus")
+			break
+		}
+
+		// Mise à jour de N et du tabSC pour un ancien site
+		if rcvmsg[0:3] == "CN=" {
+			indiceBarre := strings.IndexByte(rcvmsg, byte('|'))
+			siteDemandeur, _ := strconv.Atoi(rcvmsg[indiceBarre+1:])
+			newN, _ := strconv.Atoi(rcvmsg[3:indiceBarre])
+			if newN > N {
+				tabSC = append(tabSC, utils.MessageExclusionMutuelle{Type: utils.Liberation, Estampille: utils.Estampille{Site: N - 1, Horloge: 0}}) //On peut se permettre de mettre l'horloge à 0 puisqu'elle va changer après l'accusé
+				utils.DisplayWarning(monNom, "Arrivée", "Je mets mon N à "+strconv.Itoa(newN)+" | len(tabSC)="+strconv.Itoa(len(tabSC))+" | tabSC="+utils.TabSCToString(tabSC))
+			} else {
+				tabSC[siteDemandeur-1] = utils.MessageExclusionMutuelle{utils.Liberation, utils.Estampille{tabSC[siteDemandeur-1].Estampille.Site, math.MaxInt}} // ATTENTION, ZONE TRÈS SENSIBLE ICI : On ne peut pas se permettre de mettre l'horloge à 0 car elle ne va pas changer avant réception du message
+				utils.DisplayWarning(monNom, "Départ", "Je mets mon N à "+strconv.Itoa(newN)+" | len(tabSC)="+strconv.Itoa(len(tabSC))+" | tabSC="+utils.TabSCToString(tabSC))
+			}
+			N = newN
 			continue
 		}
+
+		// Mise à jour de N et du tabSC pour le nouveau site
+		if rcvmsg[0:4] == "CNN=" {
+			N, _ = strconv.Atoi(rcvmsg[4:])
+			utils.DisplayWarning(monNom, "lecture", "Je mets mon N à "+strconv.Itoa(N))
+			tabSC = make([]utils.MessageExclusionMutuelle, N)
+			for i := 0; i < len(tabSC); i++ {
+				tabSC[i].Type = utils.Liberation
+				tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
+			}
+			go lancerSaveAuto() //Lancement d'une sauvegarde automatique pour récupérer les pixels précédemment envoyés
+			continue
+		}
+
 		mutex.Lock()
 
 		// On traite uniquement les messages qui commencent par un 'C'
 		if rcvmsg[0] == uint8('C') {
 			rcvmsg = rcvmsg[1:]
+			//utils.DisplayInfoSauvegarde("JE SUIS LÀ", "", rcvmsg)
 
-			// Demande de sauvegarde
+			if utils.TrouverValeur(rcvmsg, "id") != "" { //Cas d'un message en provenance d'en bas
+				id, _ = strconv.Atoi(utils.TrouverValeur(rcvmsg, "id"))
+				rcvmsg = utils.TrouverValeur(rcvmsg, "message")
+				//utils.DisplayWarning(monNom, "Reception", "Je vais traiter ceci :"+rcvmsg)
+			}
+
 			if rcvmsg == "sauvegarde" {
-				traiterDebutSauvegarde()
-
+				traiterDebutSauvegarde() //OK
 				// Traitement des messages de contrôle
 			} else if utils.TrouverValeur(rcvmsg, "couleur") != "" {
 				if utils.TrouverValeur(rcvmsg, "prepost") == "true" {
-					traiterMessagePrepost(rcvmsg)
+					traiterMessagePrepost(id, rcvmsg) //OK
 				} else {
-					traiterMessageControle(rcvmsg)
+					traiterMessageControle(id, rcvmsg) //OK
 				}
 			} else if utils.TrouverValeur(rcvmsg, "etat") != "" {
-				traiterMessageEtat(rcvmsg)
+				traiterMessageEtat(id, rcvmsg) //OK
 			} else if utils.TrouverValeur(rcvmsg, "siteCible") != "" {
-				traiterMessageAccuse(rcvmsg)
+				traiterMessageAccuse(id, rcvmsg) //OK
 			} else if utils.TrouverValeur(rcvmsg, "estampilleSite") != "" {
+				//utils.DisplayError(monNom, "Reception", "J'ai reçu :"+rcvmsg)
 				demande := utils.StringToMessageTypeSC(rcvmsg)
 				switch demande {
 				case utils.Requete:
-					traiterMessageRequete(rcvmsg)
+					traiterMessageRequete(id, rcvmsg) //OK
 				case utils.Liberation:
-					traiterMessageLiberation(rcvmsg)
+					traiterMessageLiberation(id, rcvmsg) //OK
 				default:
 					utils.DisplayError(monNom, "lecture", "Demande de SC non supportée")
 				}
 			} else if utils.TrouverValeur(rcvmsg, "typeSC") != "" {
-				traiterMessageSC(rcvmsg)
+				traiterMessageSC(rcvmsg) //OK
 			} else {
-				traiterMessagePixel(rcvmsg)
+				traiterMessagePixel(rcvmsg) //OK
 			}
 		}
 		mutex.Unlock()
+		id = -1
 	}
 }
 
 // TRAITEMENT DES CONTRÔLES NORMAUX : on extrait le pixel que l'on exploite dans l'app-base et on fait suivre l'information
 // et tout cela avec les bonnes informations mises à jour dans le message : horloge, couleur
-func traiterMessageControle(rcvmsg string) {
+func traiterMessageControle(id int, rcvmsg string) {
 	message := utils.StringToMessage(rcvmsg)
 
 	// On traite le message uniquement s'il ne vient pas de nous
 	if message.Nom == monNom {
+		go envoyerMessage(toMessageIdForNet(id, ""))
 		return
 	}
 
@@ -79,14 +123,14 @@ func traiterMessageControle(rcvmsg string) {
 
 		messageEtat := utils.MessageEtat{monEtatLocal}
 		utils.DisplayInfoSauvegarde(monNom, "Controle", "Etat : "+utils.MessageEtatToString(messageEtat))
-		envoyerMessageEtat(messageEtat)
+		envoyerMessageEtat(-1, messageEtat)
 
 		// Réception d'un message prépost pas encore marqué comme prépost
 	} else if message.Couleur == utils.Blanc && maCouleur == utils.Jaune {
 		utils.DisplayInfoSauvegarde(monNom, "Controle", "Prepost détecté")
 		messagePrepost := message
 		messagePrepost.Prepost = true
-		envoyerMessageControle(messagePrepost)
+		envoyerMessageControle(-1, messagePrepost) //?
 	}
 
 	message.Couleur = maCouleur
@@ -99,15 +143,17 @@ func traiterMessageControle(rcvmsg string) {
 	monEtatLocal = utils.MajEtatLocal(monEtatLocal, messagePixel)
 	monEtatLocal.Vectorielle = utils.CopyHorlogeVectorielle(horlogeVectorielle)
 
-	envoyerMessageControle(message)  // Pour la prochaine app de contrôle de l'anneau
-	envoyerMessageBase(messagePixel) // Pour l'app de base
+	envoyerMessageControle(id, message) // Pour la prochaine app de contrôle de l'anneau
+	envoyerMessageBase(messagePixel)    // Pour l'app de base
+
+	maCouleur = utils.Blanc //Pour multiplier les sauvegardes
 }
 
-func traiterMessagePrepost(rcvmsg string) {
+func traiterMessagePrepost(id int, rcvmsg string) {
 
 	if !jeSuisInitiateur {
 		utils.DisplayInfoSauvegarde(monNom, "Prepost", "Prepost transféré : "+rcvmsg)
-		go envoyerMessage(toMessageForNet(rcvmsg)) // On fait suivre le message sur l'anneau
+		go envoyerMessage(toMessageIdForNet(id, rcvmsg)) // On fait suivre le message sur l'anneau
 		return
 	}
 
@@ -121,11 +167,11 @@ func traiterMessagePrepost(rcvmsg string) {
 	}
 }
 
-func traiterMessageEtat(rcvmsg string) {
+func traiterMessageEtat(id int, rcvmsg string) {
 
 	if !jeSuisInitiateur {
 		utils.DisplayInfoSauvegarde(monNom, "Etat", "Transfert message etat : "+rcvmsg)
-		go envoyerMessage(toMessageForNet(rcvmsg))
+		go envoyerMessage(toMessageIdForNet(id, rcvmsg))
 		return
 	}
 
@@ -156,7 +202,7 @@ func traiterMessagePixel(rcvmsg string) {
 	monEtatLocal.Vectorielle = utils.CopyHorlogeVectorielle(horlogeVectorielle)
 
 	message := utils.Message{messagePixel, horlogeVectorielle, monNom, maCouleur, false}
-	envoyerMessageControle(message)
+	envoyerMessageControle(-1, message)
 }
 
 func traiterDebutSauvegarde() {
@@ -171,14 +217,23 @@ func traiterDebutSauvegarde() {
 }
 
 func finSauvegarde() {
+	maCouleur = utils.Blanc
+	jeSuisInitiateur = false
 	utils.DisplayInfoSauvegarde(monNom, "Fin", "Sauvegarde complétée")
 
 	// On affiche l'état global (liste des états locaux et liste des messages préposts)
 	for _, etatLocal := range etatGlobal.ListEtatLocal {
 		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.EtatLocalToString(etatLocal))
 	}
+
+	for _, mp := range etatGlobal.ListEtatLocal[1].ListMessagePixel {
+		utils.DisplayInfoSauvegarde(monNom, "MAJ ETAT LOCAL", "Je prends dans l'état de "+etatGlobal.ListEtatLocal[1].NomSite)
+		monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, mp)
+	}
+
 	for _, mp := range etatGlobal.ListMessagePrepost {
 		utils.DisplayInfoSauvegarde(monNom, "Fin", utils.MessageToString(mp))
+		monEtatLocal.ListMessagePixel = append(monEtatLocal.ListMessagePixel, mp.Pixel)
 	}
 
 	// On calcule si la coupure et cohérente et on récupère sa date (max de la vectorielle de chaque site)
@@ -216,11 +271,11 @@ func traiterMessageSC(rcvmsg string) {
 	tabSC[Site] = message
 
 	// On transmet la Requete ou la Liberation sur l'anneau
-	envoyerMessageSCControle(message)
+	envoyerMessageSCControle(-1, message)
 }
 
 // APP CONTROL -> APP CONTROL
-func traiterMessageRequete(rcvmsg string) {
+func traiterMessageRequete(id int, rcvmsg string) {
 	demande := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
 	// Si le message ne vient pas de nous
@@ -231,8 +286,9 @@ func traiterMessageRequete(rcvmsg string) {
 		tabSC[demande.Estampille.Site] = demande
 
 		// On envoie un Accuse à l'émetteur de la Requete et on transmet celle-ci sur l'anneau
-		envoyerMessageAccuse(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
-		envoyerMessageSCControle(demande)
+		envoyerMessageAccuse(-1, utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}})
+		//utils.DisplayError(monNom, "Reception", "J'envoi cet accusé :"+utils.MessageAccuseToString(utils.MessageAccuse{SiteCible: demande.Estampille.Site, Estampille: utils.Estampille{Site, HEM}}))
+		envoyerMessageSCControle(id, demande)
 
 		// On regarde si on peut accepter une SC chez nous
 	} else if utils.QuestionEntreeSC(Site, tabSC) {
@@ -240,11 +296,13 @@ func traiterMessageRequete(rcvmsg string) {
 		envoyerMessageSCBase(tabSC[Site].Type)
 	} else {
 		utils.DisplayInfoSC(monNom, "Requete", "SC refusée ! "+" La SC est occupée par C"+strconv.Itoa(utils.PlusVieilleRequeteAlive(Site, tabSC)+1)+" !")
+		//utils.DisplayInfoSC(monNom, "Requete", "tabSC="+utils.TabSCToString(tabSC))
+		//os.Exit(1)
 	}
 }
 
 // APP CONTROL -> APP CONTROL
-func traiterMessageLiberation(rcvmsg string) {
+func traiterMessageLiberation(id int, rcvmsg string) {
 	liberation := utils.StringToMessageExclusionMutuelle(rcvmsg)
 
 	// Si le message ne vient pas de nous
@@ -255,7 +313,7 @@ func traiterMessageLiberation(rcvmsg string) {
 		tabSC[liberation.Estampille.Site] = liberation
 
 		// On transmet le message sur l'anneau
-		envoyerMessageSCControle(liberation)
+		envoyerMessageSCControle(id, liberation)
 	}
 
 	// On regarde si on peut accepter une SC chez nous
@@ -266,12 +324,12 @@ func traiterMessageLiberation(rcvmsg string) {
 }
 
 // APP CONTROL -> APP CONTROL
-func traiterMessageAccuse(rcvmsg string) {
+func traiterMessageAccuse(id int, rcvmsg string) {
 	message := utils.StringToMessageAccuse(rcvmsg)
 
 	// Si l'Accuse n'est pas pour nous, on le transmet et on quitte la fonction
 	if Site != message.SiteCible {
-		envoiSequentiel(toMessageForNet(rcvmsg))
+		envoiSequentiel(toMessageIdForNet(id, rcvmsg))
 		return
 	}
 
@@ -279,4 +337,10 @@ func traiterMessageAccuse(rcvmsg string) {
 	if tabSC[message.Estampille.Site].Type != utils.Requete {
 		tabSC[message.Estampille.Site] = utils.MessageExclusionMutuelle{utils.Accuse, message.Estampille}
 	}
+}
+
+func lancerSaveAuto() {
+	time.Sleep(1 * time.Second)
+	traiterDebutSauvegarde() //Demande une sauvegarde automatiquement en arrivant
+	traiterMessagePixel("/=positionX=1000/=positionY=1000/=R=0/=G=0/=B=0")
 }

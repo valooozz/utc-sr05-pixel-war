@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -231,15 +232,43 @@ func StringToMessageAccuse(str string) MessageAccuse {
 // MessageNet
 ////////////////
 
+func VecteurToString(vect []int) string {
+	var str string
+	str += "["
+	for i, val := range vect {
+		if i > 0 {
+			str += "_"
+		}
+		str += strconv.Itoa(val)
+	}
+	str += "]"
+	return str
+}
+
+func StringToVecteur(s string) []int {
+	s = strings.Trim(s, "[]")
+	valuesStr := strings.Split(s, "_")
+	var vect []int
+	for _, valStr := range valuesStr {
+		val, _ := strconv.Atoi(valStr)
+		vect = append(vect, val)
+	}
+	return vect
+}
+
 func HeaderToString(header Header) string {
 	sep1 := "$"
 	sep2 := "^"
-	return sep1 + sep2 + "champFictif" + sep2 + header.ChampFictif
+	return sep1 + sep2 + "origine" + sep2 + strconv.Itoa(header.Origine) + sep1 + sep2 + "destination" + sep2 + strconv.Itoa(header.Destination) +
+		sep1 + sep2 + "initiateur" + sep2 + strconv.Itoa(header.Initiateur) + sep1 + sep2 + "vecteur" + sep2 + VecteurToString(header.Vecteur)
 }
 
 func StringToHeader(str string) Header {
-	champFictif := TrouverValeur(str, "champFictif")
-	header := Header{ChampFictif: champFictif}
+	o, _ := strconv.Atoi(TrouverValeur(str, "origine"))
+	d, _ := strconv.Atoi(TrouverValeur(str, "destination"))
+	i, _ := strconv.Atoi(TrouverValeur(str, "initiateur"))
+	v := StringToVecteur(TrouverValeur(str, "vecteur"))
+	header := Header{o, d, i, v}
 	return header
 }
 
@@ -255,4 +284,110 @@ func StringToMessageNet(str string) MessageNet {
 	messageControl := TrouverValeur(str, "messageControl")
 	message := MessageNet{header, messageControl}
 	return message
+}
+
+////////////////
+// MessageId
+////////////////
+
+func MessageIdToString(messageId MessageId) string {
+	sep1 := "$"
+	sep2 := "^"
+	return sep1 + sep2 + "id" + sep2 + strconv.Itoa(messageId.Id) + sep1 + sep2 + "message" + sep2 + messageId.Message
+}
+
+func StringToMessageId(str string) MessageId {
+	id, _ := strconv.Atoi(TrouverValeur(str, "id"))
+	message := TrouverValeur(str, "message")
+	messageId := MessageId{Id: id, Message: message}
+	return messageId
+}
+
+/////////////////////
+// Routage
+/////////////////////
+
+func StringToTableDeRoutage(s string) TableDeRoutage {
+	s = strings.Trim(s, "[]") // Enlever les crochets
+	routesStr := strings.Split(s, ";")
+	var tdr TableDeRoutage
+	for _, routeStr := range routesStr {
+		fields := strings.Split(routeStr, ",")
+		origine, _ := strconv.Atoi(fields[0])
+		destination, _ := strconv.Atoi(fields[1])
+		tdr = append(tdr, Route{Origine: origine, Destination: destination})
+	}
+	return tdr
+}
+
+func TableDeRoutageToString(tdr TableDeRoutage) string {
+	var sb strings.Builder
+	sb.WriteString("[")
+	for i, route := range tdr {
+		if i > 0 {
+			sb.WriteString(";")
+		}
+		sb.WriteString(fmt.Sprintf("%d,%d", route.Origine, route.Destination))
+	}
+	sb.WriteString("]")
+	return sb.String()
+}
+
+////////////
+// Election
+////////////
+
+func MessageVagueToString(messageVague MessageVague) string {
+	return sepM + sepP + "site" + sepP + strconv.Itoa(messageVague.Site) +
+		sepM + sepP + "coloration" + sepP + strconv.Itoa(int(messageVague.Coloration)) +
+		sepM + sepP + "info" + sepP + strconv.Itoa(messageVague.Info) +
+		sepM + sepP + "cible" + sepP + strconv.Itoa(messageVague.Cible) +
+		sepM + sepP + "siteDemandeur" + sepP + strconv.Itoa(messageVague.SiteDemandeur)
+}
+
+func StringToMessageVague(str string) MessageVague {
+	site, _ := strconv.Atoi(TrouverValeur(str, "site"))
+	coloration, _ := strconv.Atoi(TrouverValeur(str, "coloration"))
+	info, _ := strconv.Atoi(TrouverValeur(str, "info"))
+	cible, _ := strconv.Atoi(TrouverValeur(str, "cible"))
+	siteD, _ := strconv.Atoi(TrouverValeur(str, "siteDemandeur"))
+
+	messageVague := MessageVague{site, ColorationVague(coloration), info, cible, siteD}
+	return messageVague
+}
+
+//////////////////
+// Raccordement
+//////////////////
+
+func MessageRaccordToString(messageRaccord MessageRaccord) string {
+	return sepM + sepP + "site" + sepP + strconv.Itoa(messageRaccord.Site) +
+		sepM + sepP + "type" + sepP + messageRaccord.Type +
+		sepM + sepP + "info" + sepP + strconv.Itoa(messageRaccord.Info) +
+		sepM + sepP + "cible" + sepP + strconv.Itoa(messageRaccord.Cible)
+}
+
+func StringToMessageRaccord(str string) MessageRaccord {
+	site, _ := strconv.Atoi(TrouverValeur(str, "site"))
+	typeM := TrouverValeur(str, "type")
+	info, _ := strconv.Atoi(TrouverValeur(str, "info"))
+	cible, _ := strconv.Atoi(TrouverValeur(str, "cible"))
+
+	messageRaccord := MessageRaccord{site, typeM, info, cible}
+	return messageRaccord
+}
+
+func TabSCToString(tab []MessageExclusionMutuelle) string {
+	var sb = "["
+
+	for i, msg := range tab {
+		if i > 0 {
+			sb += "|"
+		}
+		// Conversion de chaque message en chaîne et ajout au StringBuilder
+		sb += "T:" + strconv.Itoa(int(msg.Type)) + "S:" + strconv.Itoa(msg.Estampille.Site) + "H:" + strconv.Itoa(msg.Estampille.Horloge)
+	}
+	sb += "]"
+
+	return sb
 }

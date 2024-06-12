@@ -4,6 +4,10 @@ import drawPixel from "./drawPixel.js"
 import onClickColor from "./events/onClickColor.js";
 import onClickPixel from "./events/onClickPixel.js";
 
+
+//PARTIE APP BASE
+
+
 var ws;
 const pixelSize = 10;
 const canvasHeight = 600;
@@ -158,3 +162,112 @@ function addToLog(message) {
     logs.appendChild(d);
     logs.scroll(0, logs.scrollHeight);
 }
+
+
+
+
+
+
+
+
+//PARTIE APP NET
+
+
+
+var ws2;
+
+document.getElementById("connecterNet").onclick = function(evt) {
+    if (ws2) {
+        return false;
+    }
+
+    var host = document.getElementById("hostNet").value;
+    var port = document.getElementById("portNet").value;
+
+    addToLogNet("Tentative de connexion")
+    addToLogNet("host = " + host + ", port = " + port)
+    ws2 = new WebSocket("ws://"+host+":"+port+"/ws");
+
+    ws2.onopen = function(evt) {
+        addToLogNet("Websocket ouverte");
+    }
+
+    ws2.onclose = function(evt) {
+        addToLogNet("Websocket fermée");
+        ws2 = null;
+    }
+
+    ws2.onmessage = function(evt) {
+        addToLogNet(evt.data);
+    }
+
+    ws2.onerror = function(evt) {
+        addToLog("Erreur: " + evt.data);
+    }
+    return false;
+}
+
+document.getElementById("fermerNet").onclick = function(evt) {
+    if (!ws2) {
+        return false;
+    }
+    ws2.close();
+    return false;
+}
+
+
+function addToLogNet(message) {
+    var logs = document.getElementById("logsNet");
+    var d = document.createElement("div");
+    d.textContent = message;
+    logs.appendChild(d);
+    logs.scroll(0, logs.scrollHeight);
+}
+
+document.getElementById("inactif").onclick = function (evt){
+    if(!ws2) {
+        return false;
+    }
+    let sndmsg = "inactif"
+    addToLogNet("Envoi: " + sndmsg);
+    ws2.send(sndmsg);
+    return false;
+}
+
+document.getElementById("actif").onclick = function (evt){
+    if(!ws2) {
+        return false;
+    }
+    let sndmsg = "actif"
+    addToLogNet("Envoi: " + sndmsg);
+    ws2.send(sndmsg);
+    return false;
+}
+
+
+
+// RECUPERATION AUTOMATIQUE DES PORTS
+window.onload = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const portB = urlParams.get('portB');
+    const portN = urlParams.get('portN');
+
+    const portBValue = parseInt(portB, 10);
+    const portNValue = parseInt(portN, 10);
+
+
+    if (!isNaN(portBValue)) {
+        document.getElementById('port').value = portBValue;
+    }
+
+    if (!isNaN(portNValue)) {
+        document.getElementById('portNet').value = portNValue;
+    }
+
+    console.log(portBValue)
+    console.log(portNValue)
+    setTimeout(function() {
+        document.getElementById('connecter').click();
+        document.getElementById('connecterNet').click();
+    }, 5000);
+};
