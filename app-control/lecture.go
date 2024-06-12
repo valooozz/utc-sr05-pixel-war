@@ -22,7 +22,7 @@ func lecture() {
 			break
 		}
 
-		// Mise à jour de N pour un ancien
+		// Mise à jour de N et du tabSC pour un ancien site
 		if rcvmsg[0:3] == "CN=" {
 			indiceBarre := strings.IndexByte(rcvmsg, byte('|'))
 			siteDemandeur, _ := strconv.Atoi(rcvmsg[indiceBarre+1:])
@@ -38,7 +38,7 @@ func lecture() {
 			continue
 		}
 
-		// Mise à jour de N pour le nouveau
+		// Mise à jour de N et du tabSC pour le nouveau site
 		if rcvmsg[0:4] == "CNN=" {
 			N, _ = strconv.Atoi(rcvmsg[4:])
 			utils.DisplayWarning(monNom, "lecture", "Je mets mon N à "+strconv.Itoa(N))
@@ -47,7 +47,7 @@ func lecture() {
 				tabSC[i].Type = utils.Liberation
 				tabSC[i].Estampille = utils.Estampille{Site: i, Horloge: 0}
 			}
-			go lancerSaveAuto()
+			go lancerSaveAuto() //Lancement d'une sauvegarde automatique pour récupérer les pixels précédemment envoyés
 			continue
 		}
 
