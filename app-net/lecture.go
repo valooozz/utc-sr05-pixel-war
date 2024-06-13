@@ -135,14 +135,6 @@ func transmission(rcvmsg string) {
 					messageNet.Header = headerForward
 					envoyerNet(utils.MessageNetToString(messageNet))
 					preparateur("E", messageNet) //log au niveau du client
-
-					// A RETIRER
-					// Fonctionnement si jamais on change la table de routage des sites encore actifs :
-					/*messageNet := utils.StringToMessageNet(message)
-					header := messageNet.Header
-					if header.Destination == utils.GetDestinationFor(header.Origine, tableDeRoutage) {
-						fmt.Println(rcvmsg)
-					}*/
 				}
 				// Si c'est un message pour les apps net, et qu'on a plus (+) d'un voisin (évite quelques cas de ping-pong infini)
 			} else if nbVoisinsAttendus > 1 {
@@ -193,10 +185,6 @@ func traiterMessageNet(message string) {
 	if header.Destination == monNum { // Si le message nous est destiné sur l'anneau
 		preparateur("R", messageNet) // log au niveau du client
 		//utils.utils.DisplayError(monNom, "traiterMessageNet", "Reçu : "+message)
-
-		// A RETIRER
-		//if header.Vecteur[monNum-1] == 1 || (header.Initiateur == monNum && !utils.IlNeRestePlusQue(header.Initiateur, header.Vecteur)) || header.Origine != tableDeRoutage[0].Origine { //nième réception ou repassage par l'initiateur
-
 		if header.Origine != tableDeRoutage[0].Origine { // nième réception ou repassage par l'initiateur
 			headerForward := header
 			headerForward.Destination = utils.GetDestinationFor(headerForward.Origine, tableDeRoutage)
@@ -373,7 +361,6 @@ func traiterAcceptationRaccord(rcvmsg string) {
 	}
 }
 
-// A RETIRER
 func traiterDepartRaccord() {
 	envoyerMessageVert(demande.Info, monNum, demande.Site)
 	reinitialiserVague(demande.Info, demande.Site)
@@ -393,24 +380,6 @@ func traiterSignalRaccord(rcvmsg string) {
 	if messageRaccord.Info > 0 { // Si un site a rejoint, on lui signale notre existence
 		envoyerVoisinRaccord(messageRaccord.Site)
 	}
-
-	// A RETIRER
-	// Si on veut changer la table de routage des sites actifs lors du départ d'un site
-	// Il faut que le site qui s'en va partage sa table de routage puis qu'on la traite ici :
-	/*var newDestination int
-	for _, route := range tableDuPartant {
-		if route.Origine == monNum {
-			newDestination = route.Destination
-			break
-		}
-	}
-	for _, route := range tableDeRoutage {
-		if route.Destination == messageRaccord.Site {
-			route.Destination = newDestination
-			break
-		}
-	}*/
-
 }
 
 // Traite un signal envoyé par les voisins après qu'on les a prévenus de notre arrivée
