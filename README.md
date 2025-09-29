@@ -178,3 +178,13 @@ sh [nom_du_script_a_lancer]
 ```
 sh nettoyage.sh
 ```
+
+## Contributeurs
+
+Ce projet a été réalisé dans le cadre du cours **SR05 - Systèmes distribués**, de l'UTC. Le groupe était composé de quatre personnes :
+- Antoine Sesini
+- Quentin Voiret
+- Marius Bureau
+- Valentin Corazza
+
+Certains de ces contributeurs n'apparaissent pas dans l'historique git car la plupart des développements étaient réalisés en session de codage en groupe, sur la machine d'un seul membre, qui réalisait ensuite le commit.
